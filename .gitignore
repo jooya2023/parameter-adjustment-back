@@ -6,6 +6,8 @@ __pycache__
 db.sqlite3
 media
 
+docker-compose-vahid.yml
+
 # Backup files #
 *.bak
 
