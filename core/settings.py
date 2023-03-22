@@ -9,10 +9,9 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
+import datetime
 from pathlib import Path
 from decouple import config
-from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,7 +43,8 @@ APPS_DJANGO = [
 
 APPS_CORE = [
     'accounts',
-    'commands'
+    'commands',
+    'parameter',
 ]
 
 INSTALLED_APPS = APPS_DJANGO + APPS_CORE
@@ -83,23 +83,23 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': config('DB_NAME'),
-#         'USER': config('DB_USER'),
-#         'PASSWORD': config('DB_PASSWORD'),
-#         'HOST': config('DB_HOST'),
-#         'PORT': '',
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config("DB_NAME"),
+        'USER': config("DB_USER"),
+        'PASSWORD': config("DB_PASSWORD"),
+        'HOST': config("DB_HOST"),
+        'PORT': config("DB_PORT"),
+    }
+}
 
 
 # Password validation
@@ -151,15 +151,18 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': [
         'core.helper.renderers.CustomJSONRenderer'
-    ]
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'core.helper.global_paginations.CustomPagination',
+    'PAGE_SIZE': config('PAGE_SIZE', default=10),
+    'MAX_PAGE_SIZE': config('MAX_PAGE_SIZE', default=10000),
 }
 
 # Config jwt Authentication
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=config('ACCESS_TOKEN_LIFETIME', cast=int)),
-    'REFRESH_TOKEN_LIFETIME': timedelta(seconds=config('REFRESH_TOKEN_LIFETIME', cast=int)),
-    'ROTATE_REFRESH_TOKENS': timedelta(seconds=config('ROTATE_REFRESH_TOKENS', cast=bool)),
-    'UPDATE_LAST_LOGIN': timedelta(seconds=config('UPDATE_LAST_LOGIN', cast=bool)),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(seconds=config('ACCESS_TOKEN_LIFETIME', cast=int)),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(seconds=config('REFRESH_TOKEN_LIFETIME', cast=int)),
+    'ROTATE_REFRESH_TOKENS': config('ROTATE_REFRESH_TOKENS', cast=bool),
+    'UPDATE_LAST_LOGIN': config('UPDATE_LAST_LOGIN', cast=bool),
     'AUTH_HEADER_TYPES': ('Bearer', 'Token',)
 }
 
@@ -172,3 +175,26 @@ CORS_ORIGIN_WHITELIST = [
 
 SESSION_COOKIE_DOMAIN = None
 SESSION_COOKIE_SECURE = True
+
+# Config Redis
+REDIS = {
+    'default': {
+        'USER': config('USER_REDIS'),
+        'PASSWORD': config('PASSWORD_REDIS'),
+        'HOST': config('HOST_REDIS'),
+        'PORT': config('PORT_REDIS', cast=int)
+    }
+}
+
+# Config Swagger
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Token': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    },
+    # 'LOGOUT_URL': '/api/accounts/logout/',
+    # 'LOGIN_URL' : "/api/accounts/login/"
+}
