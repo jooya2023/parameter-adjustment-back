@@ -1,0 +1,82 @@
+version: "3.8"
+
+services:
+# Nginx --------------------------------------------------------------------------------------------
+  parameter-nginx:
+    image: nginx:latest
+    container_name: parameter_nginx
+    hostname: parameter_nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./docker/compose/nginx_config/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/compose/nginx_config/conf.d/:/etc/nginx/conf.d
+      - parameter_media_data:/django_media:ro
+      - parameter_statics_data:/django_statics:ro
+    networks:
+      - parameter
+    depends_on:
+      - parameter-api
+    restart: on-failure
+# Postgresql --------------------------------------------------------------------------------------------
+  parameter-postgres:
+    image: postgres:latest
+    container_name: parameter_postgres
+    hostname: parameter_postgres
+    environment:
+      - POSTGRES_DB=parameter
+      - POSTGRES_USER=parameter_user
+      - POSTGRES_PASSWORD=parameter_YJh%q!3LU7sUIj5%OELk
+    ports:
+      - 5432:5432
+    volumes:
+      - parameter_postgres_data:/var/lib/postgresql/data
+    networks:
+      - parameter
+    restart: on-failure
+# Redis --------------------------------------------------------------------------------------------
+  parameter-redis:
+    image: redis:latest
+    container_name: parameter_redis
+    hostname: parameter_redis
+    ports:
+      - 6379:6379
+    volumes:
+      - parameter_redis_data:/data
+    networks:
+      - parameter
+    command: ["sh", "-c", "rm -f /data/dump.rdb && redis-server --save '' --appendonly no --requirepass $PASSWORD_REDIS"]
+    restart: on-failure
+# API --------------------------------------------------------------------------------------------
+  parameter-api:
+    image: parameter_api:latest
+    container_name: parameter_api
+    hostname: parameter_api
+    depends_on:
+      - parameter-postgres
+    ports:
+      - 8000:8000
+    env_file:
+      - .env
+    volumes:
+      - parameter_media_data:/app/media
+      - parameter_statics_data:/app/statics
+    networks:
+      - parameter
+    restart: on-failure
+
+volumes:
+    parameter_media_data:
+        external: false
+    parameter_statics_data:
+        external: false
+    parameter_postgresql_data:
+        external: false
+    parameter_redis_data:
+        external: false
+
+networks:
+    parameter:
+        external: true
+        name: parameternet
