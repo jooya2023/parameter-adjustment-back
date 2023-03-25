@@ -64,3 +64,27 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('Success : user type monitoring create.'))
         elif not create_user_type_monitoring:
             self.stdout.write(self.style.WARNING('Warning : user type monitoring exist!'))
+
+        create_user_sysadmin = self.command_accounts.create_user_sysadmin()
+        if create_user_sysadmin:
+            self.stdout.write(self.style.SUCCESS('Success: user sysadmin created.'))
+        elif not create_user_sysadmin:
+            self.stdout.write(self.style.WARNING('Warning : user sysadmin exists.'))
+
+        create_user_supervisor = self.command_accounts.create_user_supervisor()
+        if create_user_supervisor:
+            self.stdout.write(self.style.SUCCESS('Success: user supervisor created.'))
+        elif not create_user_supervisor:
+            self.stdout.write(self.style.WARNING('Warning : user supervisor exists!'))
+
+        create_user_operation = self.command_accounts.create_user_operation()
+        if create_user_operation:
+            self.stdout.write(self.style.SUCCESS('Success: user operation created.'))
+        elif not create_user_operation:
+            self.stdout.write(self.style.WARNING('Warning : user operation exists!'))
+
+        create_user_monitoring = self.command_accounts.create_user_monitoring()
+        if create_user_monitoring:
+            self.stdout.write(self.style.SUCCESS('Success: user monitoring created.'))
+        elif not create_user_monitoring:
+            self.stdout.write(self.style.WARNING('Warning : user monitoring exists!'))

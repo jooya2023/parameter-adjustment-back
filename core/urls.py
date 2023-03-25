@@ -38,5 +38,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include("accounts.api.urls")),
     path("", include("parameter.api.urls")),
+    path("", include("permissions.api.urls")),
     re_path(r'^api/docs/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

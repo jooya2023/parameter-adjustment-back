@@ -45,6 +45,7 @@ APPS_CORE = [
     'accounts',
     'commands',
     'parameter',
+    'permissions',
 ]
 
 INSTALLED_APPS = APPS_DJANGO + APPS_CORE
@@ -152,9 +153,9 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'core.helper.renderers.CustomJSONRenderer'
     ],
-    'DEFAULT_PAGINATION_CLASS': 'core.helper.global_paginations.CustomPagination',
-    'PAGE_SIZE': config('PAGE_SIZE', default=10),
-    'MAX_PAGE_SIZE': config('MAX_PAGE_SIZE', default=10000),
+    # 'DEFAULT_PAGINATION_CLASS': 'core.helper.global_paginations.CustomPagination',
+    # 'PAGE_SIZE': config('PAGE_SIZE', default=10),
+    # 'MAX_PAGE_SIZE': config('MAX_PAGE_SIZE', default=10000),
 }
 
 # Config jwt Authentication
