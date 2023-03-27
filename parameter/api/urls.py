@@ -9,5 +9,7 @@ urlpatterns = [
     path('api/furnace-setting/<int:id>/', views.FurnaceSettingRetrieveUpdateDestroyAPIView.as_view(), name="detail_update_delete_furnace_setting"),
 
     path('api/parameter/', views.ParameterListCreateAPIView.as_view(), name="list_create_parameter"),
-    path('api/parameter/<int:id>/', views.ParameterRetrieveUpdateDestroyAPIView.as_view(), name="detail_update_delete_parameter")
+    path('api/parameter/<int:id>/', views.ParameterRetrieveUpdateDestroyAPIView.as_view(), name="detail_update_delete_parameter"),
+
+    path('api/parameter/calc/', views.ParameterCalculationAPIView.as_view(), name="calc_paramater"),
 ]

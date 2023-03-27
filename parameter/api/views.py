@@ -1,8 +1,9 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
+from rest_framework.response import Response
 
-from parameter.api.serializers import FurnaceSettingSerializer, ParameterSerializer
+from parameter.api.serializers import FurnaceSettingSerializer, ParameterSerializer, ParameterCalculationSerializer
 from parameter.models import FurnaceSetting, Parameter
 
 from core.helper.global_permissions import CustomDjangoModelPermissions
@@ -38,3 +39,11 @@ class ParameterRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
     serializer_class = ParameterSerializer
     permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
     lookup_field = "id"
+
+
+class ParameterCalculationAPIView(generics.ListAPIView):
+    serializer_class = ParameterCalculationSerializer
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.serializer_class(request.data)
+        return Response(serializer.data)
