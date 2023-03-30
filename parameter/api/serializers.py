@@ -1,4 +1,6 @@
+import datetime
 import pandas as pd
+
 from rest_framework import serializers
 
 from django.utils.translation import gettext_lazy as _
@@ -64,25 +66,30 @@ class ParameterCalculationSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         furnace_setting = FurnaceSetting.objects.filter(is_active=True)
-        if furnace_setting.exists():
+        parameter_obj = Parameter.objects.filter(is_active=True)
+        if furnace_setting.exists() and parameter_obj.exists():
 
             furnace_1 = [item for item in furnace_setting[0].data["furnaces"] if item["id"] == 1][0]
             furnace_2 = [item for item in furnace_setting[0].data["furnaces"] if item["id"] == 2][0]
             furnace_3 = [item for item in furnace_setting[0].data["furnaces"] if item["id"] == 3][0]
 
+            parameter_1 = [item for item in parameter_obj[0].data["furnaces"] if item["id"] == 1][0]
+            parameter_2 = [item for item in parameter_obj[0].data["furnaces"] if item["id"] == 2][0]
+            parameter_3 = [item for item in parameter_obj[0].data["furnaces"] if item["id"] == 3][0]
+
             W_input = [[[] for j in range(3)] for i in range(3)]
 
-            W_input[0][0] = [40.8, 48.0]
-            W_input[0][1] = [40.6, 40.4]
-            W_input[0][2] = [35.6, 75.2]
+            W_input[0][0] = [[item["amount"] for item in parameter_1["tanks"] if item["id"] == 1][0], [item["amount"] for item in parameter_1["tanks"] if item["id"] == 2][0]]
+            W_input[0][1] = [[item["amount"] for item in parameter_2["tanks"] if item["id"] == 1][0], [item["amount"] for item in parameter_2["tanks"] if item["id"] == 2][0]]
+            W_input[0][2] = [[item["amount"] for item in parameter_3["tanks"] if item["id"] == 1][0], [item["amount"] for item in parameter_3["tanks"] if item["id"] == 2][0]]
 
-            W_input[1][0] = [8.32, 0]
-            W_input[1][1] = [8.88, 0]
-            W_input[1][2] = [8.8]
+            W_input[1][0] = [[item["amount"] for item in parameter_1["tanks"] if item["id"] == 3][0], 0]
+            W_input[1][1] = [[item["amount"] for item in parameter_2["tanks"] if item["id"] == 3][0], 0]
+            W_input[1][2] = [[item["amount"] for item in parameter_3["tanks"] if item["id"] == 3][0]]
 
-            W_input[2][0] = [6.68]
-            W_input[2][1] = [7.6]
-            W_input[2][2] = [8.68, 0]
+            W_input[2][0] = [[item["amount"] for item in parameter_1["tanks"] if item["id"] == 4][0]]
+            W_input[2][1] = [[item["amount"] for item in parameter_2["tanks"] if item["id"] == 4][0]]
+            W_input[2][2] = [[item["amount"] for item in parameter_3["tanks"] if item["id"] == 4][0], 0]
 
             # min capacity a matter
             s_floor_input = [[[] for j in range(3)] for i in range(3)]
@@ -113,16 +120,23 @@ class ParameterCalculationSerializer(serializers.Serializer):
             storage_input[2][2] = [furnace_3["maxCapacity"]["dolomite"], 6]
 
             # نرخ شارژ
-            K_input = [furnace_setting[0].data["chargeRate"]["iron"], furnace_setting[0].data["chargeRate"]["lime"], furnace_setting[0].data["chargeRate"]["dolomite"]]
+            K_input = [furnace_setting[0].data["chargeRate"]["iron"], furnace_setting[0].data["chargeRate"]["lime"],
+                       furnace_setting[0].data["chargeRate"]["dolomite"]]
 
             # delay arrival
-            D_R_input = [[furnace_1["arrivalDelay"]["iron"], furnace_1["arrivalDelay"]["lime"], furnace_1["arrivalDelay"]["dolomite"]],
-                         [furnace_2["arrivalDelay"]["iron"], furnace_2["arrivalDelay"]["lime"], furnace_2["arrivalDelay"]["dolomite"]],
-                         [furnace_3["arrivalDelay"]["iron"], furnace_3["arrivalDelay"]["lime"], furnace_3["arrivalDelay"]["dolomite"]]]
+            D_R_input = [[furnace_1["arrivalDelay"]["iron"], furnace_1["arrivalDelay"]["lime"],
+                          furnace_1["arrivalDelay"]["dolomite"]],
+                         [furnace_2["arrivalDelay"]["iron"], furnace_2["arrivalDelay"]["lime"],
+                          furnace_2["arrivalDelay"]["dolomite"]],
+                         [furnace_3["arrivalDelay"]["iron"], furnace_3["arrivalDelay"]["lime"],
+                          furnace_3["arrivalDelay"]["dolomite"]]]
             # delay empty
-            D_E_input = [[furnace_1["emptyingDelay"]["iron"], furnace_1["emptyingDelay"]["lime"], furnace_1["emptyingDelay"]["dolomite"]],
-                         [furnace_2["emptyingDelay"]["iron"], furnace_2["emptyingDelay"]["lime"], furnace_2["emptyingDelay"]["dolomite"]],
-                         [furnace_3["emptyingDelay"]["iron"], furnace_3["emptyingDelay"]["lime"], furnace_3["emptyingDelay"]["dolomite"]]]
+            D_E_input = [[furnace_1["emptyingDelay"]["iron"], furnace_1["emptyingDelay"]["lime"],
+                          furnace_1["emptyingDelay"]["dolomite"]],
+                         [furnace_2["emptyingDelay"]["iron"], furnace_2["emptyingDelay"]["lime"],
+                          furnace_2["emptyingDelay"]["dolomite"]],
+                         [furnace_3["emptyingDelay"]["iron"], furnace_3["emptyingDelay"]["lime"],
+                          furnace_3["emptyingDelay"]["dolomite"]]]
 
             disables_raw_input = [(10, 9)]
 
@@ -142,13 +156,36 @@ class ParameterCalculationSerializer(serializers.Serializer):
 
             charge_instantly_choice_input = False
 
-            CONS_input = read_cons()
-            opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list, STATUS, data = main_tread(
-                W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input,
-                B_first_11_input, disables_raw_input, charge_instantly_choice_input
-            )
+            try:
+                CONS_input = read_cons()
+                opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list, STATUS, data = main_tread(
+                    W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input,
+                    B_first_11_input, disables_raw_input, charge_instantly_choice_input
+                )
+            except Exception as e:
+                raise serializers.ValidationError(e)
+
+            if STATUS == "400":
+                raise serializers.ValidationError(_("There is a problem, please check the values."))
+
+            parameter_obj = Parameter.objects.filter(is_active=True)
+            if parameter_obj.exists():
+                lst_action_output = []
+
+                for item_opt_actions_output in opt_actions_output.values.tolist():
+                    minute = datetime.timedelta(minutes=item_opt_actions_output[0])
+                    duration = datetime.timedelta(minutes=item_opt_actions_output[1])
+                    actions_output = {
+                        "start_time": parameter_obj[0].updated_at + minute,
+                        "end_time": parameter_obj[0].updated_at + minute + duration,
+                        "row": [item_opt_actions_output[2], item_opt_actions_output[3], item_opt_actions_output[4]]
+                    }
+                    lst_action_output.append(actions_output)
+            else:
+                raise serializers.ValidationError(_("dose not exists parameter."))
+
             data_ = {
-                "opt_actions_output": str(opt_actions_output),
+                "opt_actions_output": lst_action_output,
                 "opt_w_in_time": str(opt_w_in_time),
                 "opt_B": str(opt_B),
                 "opt_shooting_list": str(opt_shooting_list),
@@ -156,4 +193,4 @@ class ParameterCalculationSerializer(serializers.Serializer):
                 "data": str(data)
             }
             return data_
-        raise serializers.ValidationError(_(""))
+        raise serializers.ValidationError(_("parameter or furnace setting not found."))

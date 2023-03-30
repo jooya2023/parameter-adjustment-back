@@ -12,7 +12,7 @@ from core.helper.global_permissions import CustomDjangoModelPermissions
 class FurnaceSettingListCreateAPIView(generics.ListCreateAPIView):
     queryset = FurnaceSetting.objects.all()
     serializer_class = FurnaceSettingSerializer
-    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+    # permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name"]
     ordering_fields = ["is_active", "created_at", "id"]
@@ -28,7 +28,7 @@ class FurnaceSettingRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyA
 class ParameterListCreateAPIView(generics.ListCreateAPIView):
     queryset = Parameter.objects.all()
     serializer_class = ParameterSerializer
-    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+    # permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name"]
     ordering_fields = ["is_active", "created_at", "id"]

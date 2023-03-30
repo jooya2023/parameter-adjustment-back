@@ -1046,9 +1046,6 @@ def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_in
     global cons_integral, charge_instantly_choice, B, node, max_time_go_forward, W_in_time, action_output, start_time_helper, level_check, max_time_B, max_time_W_in_time, max_time_action_output, STATUS
     global W, s_floor, storage, K, D_R, D_E, CONS, B_first_11, disables_raw
 
-    print(s_floor_input)
-    print(storage_input)
-
     probable_risk_bin = None
 
     W = copy.deepcopy(W_input)

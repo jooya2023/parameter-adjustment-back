@@ -50,6 +50,7 @@ services:
     restart: on-failure
 # API --------------------------------------------------------------------------------------------
   parameter-api:
+    build: .
     image: parameter_api:latest
     container_name: parameter_api
     hostname: parameter_api
