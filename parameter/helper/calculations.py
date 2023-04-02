@@ -3,6 +3,7 @@ import copy
 import math
 import os
 import time
+import functools
 
 import numpy as np
 
@@ -647,7 +648,8 @@ def read_cons():
     # df = pd.read_excel('./Data/Test-Data/consumption_201201.xlsx', sheet_name='cons_300min_bkt13', header=None)
     # # time: 1450
     # df = pd.read_excel("./CONS.xlsx", sheet_name='consumption', header=None)
-    df = pd.read_excel(os.path.join(settings.BASE_DIR, 'parameter/helper/CONS.xlsx'), sheet_name='consumption', header=None)
+    df = pd.read_excel(os.path.join(settings.BASE_DIR, 'parameter/helper/CONS.xlsx'), sheet_name='consumption',
+                       header=None)
     # # time: 1450
     # df = pd.read_excel('./Data/Test-Data/consumption_12_23.xlsx', sheet_name='consumption2_12_to_23', header=None)
     # # time: 900
@@ -1133,9 +1135,9 @@ def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_in
 
     end_time = time.time()
 
-    print('Max Time Reach: ', max_time_go_forward)
-    print('Duration: ', end_time - start_time)
-    print('Status: ', STATUS)
+    # print('Max Time Reach: ', max_time_go_forward)
+    # print('Duration: ', end_time - start_time)
+    # print('Status: ', STATUS)
 
     return opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list, STATUS, [max_time_go_forward, probable_risk_bin]
 

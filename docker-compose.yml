@@ -47,15 +47,15 @@ services:
     networks:
       - parameter
     command: ["sh", "-c", "rm -f /data/dump.rdb && redis-server --save '' --appendonly no --requirepass $PASSWORD_REDIS"]
-    restart: on-failure
+    restart: always
 # API --------------------------------------------------------------------------------------------
   parameter-api:
-    build: .
     image: parameter_api:latest
     container_name: parameter_api
     hostname: parameter_api
     depends_on:
       - parameter-postgres
+      - parameter-redis
     ports:
       - 8000:8000
     env_file:
@@ -67,6 +67,22 @@ services:
       - parameter
     restart: on-failure
 
+# Worker (Celery)--------------------------------------------------------------------------------------------
+  worker:
+    image: parameter_api:latest
+    env_file:
+      - .env
+    container_name: worker_celery
+    command: celery -A core worker --loglevel=info
+    depends_on:
+      - parameter-api
+      - parameter-redis
+    networks:
+      - parameter
+    volumes:
+      - parameter_worker_data:/data
+    restart: always
+
 volumes:
     parameter_media_data:
         external: false
@@ -75,6 +91,8 @@ volumes:
     parameter_postgresql_data:
         external: false
     parameter_redis_data:
+        external: false
+    parameter_worker_data:
         external: false
 
 networks:

@@ -103,7 +103,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
@@ -201,3 +200,7 @@ SWAGGER_SETTINGS = {
     # 'LOGOUT_URL': '/api/accounts/logout/',
     # 'LOGIN_URL' : "/api/accounts/login/"
 }
+
+# Celery config
+CELERY_BROKER_URL = config("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")

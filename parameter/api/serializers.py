@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from parameter.helper.calculations import read_cons, main_tread
 from parameter.models import FurnaceSetting, Parameter
+from parameter.api.tasks import calculation
 
 
 class FurnaceSettingSerializer(serializers.ModelSerializer):
@@ -79,9 +80,12 @@ class ParameterCalculationSerializer(serializers.Serializer):
 
             W_input = [[[] for j in range(3)] for i in range(3)]
 
-            W_input[0][0] = [[item["amount"] for item in parameter_1["tanks"] if item["id"] == 1][0], [item["amount"] for item in parameter_1["tanks"] if item["id"] == 2][0]]
-            W_input[0][1] = [[item["amount"] for item in parameter_2["tanks"] if item["id"] == 1][0], [item["amount"] for item in parameter_2["tanks"] if item["id"] == 2][0]]
-            W_input[0][2] = [[item["amount"] for item in parameter_3["tanks"] if item["id"] == 1][0], [item["amount"] for item in parameter_3["tanks"] if item["id"] == 2][0]]
+            W_input[0][0] = [[item["amount"] for item in parameter_1["tanks"] if item["id"] == 1][0],
+                             [item["amount"] for item in parameter_1["tanks"] if item["id"] == 2][0]]
+            W_input[0][1] = [[item["amount"] for item in parameter_2["tanks"] if item["id"] == 1][0],
+                             [item["amount"] for item in parameter_2["tanks"] if item["id"] == 2][0]]
+            W_input[0][2] = [[item["amount"] for item in parameter_3["tanks"] if item["id"] == 1][0],
+                             [item["amount"] for item in parameter_3["tanks"] if item["id"] == 2][0]]
 
             W_input[1][0] = [[item["amount"] for item in parameter_1["tanks"] if item["id"] == 3][0], 0]
             W_input[1][1] = [[item["amount"] for item in parameter_2["tanks"] if item["id"] == 3][0], 0]
@@ -157,6 +161,10 @@ class ParameterCalculationSerializer(serializers.Serializer):
             charge_instantly_choice_input = False
 
             try:
+                # opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list, STATUS, data = calculation.delay(
+                #     W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, B_first_11_input,
+                #     disables_raw_input, charge_instantly_choice_input
+                # )
                 CONS_input = read_cons()
                 opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list, STATUS, data = main_tread(
                     W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input,
@@ -183,14 +191,215 @@ class ParameterCalculationSerializer(serializers.Serializer):
                     lst_action_output.append(actions_output)
             else:
                 raise serializers.ValidationError(_("dose not exists parameter."))
+            lst_times = []
+            times = opt_w_in_time.loc[:, ["time"]]
+            for item_times in times.values.tolist():
+                for item_time in item_times:
+                    lst_times.append(item_time)
 
+            # Iron
+            iron_furnace1_bin1 = opt_w_in_time.loc[:, ["0,0,0"]]
+            lst_iron_furnace1_bin1 = []
+            for item_iron_furnace1_bin1 in iron_furnace1_bin1.values.tolist():
+                for item in item_iron_furnace1_bin1:
+                    if str(item) == "nan":
+                        lst_iron_furnace1_bin1.append(0.0)
+                    else:
+                        lst_iron_furnace1_bin1.append(item)
+
+            iron_furnace1_bin2 = opt_w_in_time.loc[:, ["0,0,1"]]
+            lst_iron_furnace1_bin2 = []
+            for item_iron_furnace1_bin2 in iron_furnace1_bin2.values.tolist():
+                for item in item_iron_furnace1_bin2:
+                    if str(item) == "nan":
+                        lst_iron_furnace1_bin2.append(0.0)
+                    else:
+                        lst_iron_furnace1_bin2.append(item)
+
+            iron_furnace2_bin1 = opt_w_in_time.loc[:, ["0,1,0"]]
+            lst_iron_furnace2_bin1 = []
+            for item_iron_furnace2_bin1 in iron_furnace2_bin1.values.tolist():
+                for item in item_iron_furnace2_bin1:
+                    if str(item) == "nan":
+                        lst_iron_furnace2_bin1.append(0.0)
+                    else:
+                        lst_iron_furnace2_bin1.append(item)
+
+            iron_furnace2_bin2 = opt_w_in_time.loc[:, ["0,1,1"]]
+            lst_iron_furnace2_bin2 = []
+            for item_iron_furnace2_bin2 in iron_furnace2_bin2.values.tolist():
+                for item in item_iron_furnace2_bin2:
+                    if str(item) == "nan":
+                        lst_iron_furnace2_bin2.append(0.0)
+                    else:
+                        lst_iron_furnace2_bin2.append(item)
+
+            iron_furnace3_bin1 = opt_w_in_time.loc[:, ["0,2,0"]]
+            lst_iron_furnace3_bin1 = []
+            for item_iron_furnace3_bin1 in iron_furnace3_bin1.values.tolist():
+                for item in item_iron_furnace3_bin1:
+                    if str(item) == "nan":
+                        lst_iron_furnace3_bin1.append(0.0)
+                    else:
+                        lst_iron_furnace3_bin1.append(item)
+
+            iron_furnace3_bin2 = opt_w_in_time.loc[:, ["0,2,1"]]
+            lst_iron_furnace3_bin2 = []
+            for item_iron_furnace3_bin2 in iron_furnace3_bin2.values.tolist():
+                for item in item_iron_furnace3_bin2:
+                    if str(item) == "nan":
+                        lst_iron_furnace3_bin2.append(0.0)
+                    else:
+                        lst_iron_furnace3_bin2.append(item)
+
+            # Lime
+            lime_furnace1_bin1 = opt_w_in_time.loc[:, ["1,0,0"]]
+            lst_lime_furnace1_bin1 = []
+            for item_lime_furnace1_bin1 in lime_furnace1_bin1.values.tolist():
+                for item in item_lime_furnace1_bin1:
+                    if str(item) == "nan":
+                        lst_lime_furnace1_bin1.append(0.0)
+                    else:
+                        lst_lime_furnace1_bin1.append(item)
+
+            lime_furnace1_bin2 = opt_w_in_time.loc[:, ["1,0,1"]]
+            lst_lime_furnace1_bin2 = []
+            for item_lime_furnace1_bin2 in lime_furnace1_bin2.values.tolist():
+                for item in item_lime_furnace1_bin2:
+                    if str(item) == "nan":
+                        lst_lime_furnace1_bin2.append(0.0)
+                    else:
+                        lst_lime_furnace1_bin2.append(item)
+
+            lime_furnace2_bin1 = opt_w_in_time.loc[:, ["1,1,0"]]
+            lst_lime_furnace2_bin1 = []
+            for item_lime_furnace2_bin1 in lime_furnace2_bin1.values.tolist():
+                for item in item_lime_furnace2_bin1:
+                    if str(item) == "nan":
+                        lst_lime_furnace2_bin1.append(0.0)
+                    else:
+                        lst_lime_furnace2_bin1.append(item)
+            lime_furnace2_bin2 = opt_w_in_time.loc[:, ["1,1,1"]]
+            lst_lime_furnace2_bin2 = []
+            for item_lime_furnace2_bin2 in lime_furnace2_bin2.values.tolist():
+                for item in item_lime_furnace2_bin2:
+                    if str(item) == "nan":
+                        lst_lime_furnace2_bin2.append(0.0)
+                    else:
+                        lst_lime_furnace2_bin2.append(item)
+            lime_furnace3_bin1 = opt_w_in_time.loc[:, ["1,2,0"]]
+            lst_lime_furnace3_bin1 = []
+            for item_lime_furnace3_bin1 in lime_furnace3_bin1.values.tolist():
+                for item in item_lime_furnace3_bin1:
+                    if str(item) == "nan":
+                        lst_lime_furnace3_bin1.append(0.0)
+                    else:
+                        lst_lime_furnace3_bin1.append(item)
+
+            # Dolomite
+            dolomite_furnace1_bin1 = opt_w_in_time.loc[:, ["2,0,0"]]
+            lst_dolomite_furnace1_bin1 = []
+            for item_dolomite_furnace1_bin1 in dolomite_furnace1_bin1.values.tolist():
+                for item in item_dolomite_furnace1_bin1:
+                    if str(item) == "nan":
+                        lst_dolomite_furnace1_bin1.append(0.0)
+                    else:
+                        lst_dolomite_furnace1_bin1.append(item)
+
+            dolomite_furnace1_bin2 = opt_w_in_time.loc[:, ["2,1,0"]]
+            lst_dolomite_furnace2_bin1 = []
+            for item_dolomite_furnace1_bin2 in dolomite_furnace1_bin2.values.tolist():
+                for item in item_dolomite_furnace1_bin2:
+                    if str(item) == "nan":
+                        lst_dolomite_furnace2_bin1.append(0.0)
+                    else:
+                        lst_dolomite_furnace2_bin1.append(item)
+
+            dolomite_furnace3_bin1 = opt_w_in_time.loc[:, ["2,2,0"]]
+            lst_dolomite_furnace3_bin1 = []
+            for item_dolomite_furnace3_bin1 in dolomite_furnace3_bin1.values.tolist():
+                for item in item_dolomite_furnace3_bin1:
+                    if str(item) == "nan":
+                        lst_dolomite_furnace3_bin1.append(0.0)
+                    else:
+                        lst_dolomite_furnace3_bin1.append(item)
+
+            dolomite_furnace3_bin2 = opt_w_in_time.loc[:, ["2,2,1"]]
+            a = {
+                "iron": [
+                    {
+                        "name": "کوره ۱ - پین ۱",
+                        "data": lst_iron_furnace1_bin1
+                    },
+                    {
+                        "name": "کوره ۱ - پین ۲",
+                        "data": lst_iron_furnace1_bin2,
+                    },
+                    {
+                        "name": "کوره ۲ - پین ۱",
+                        "data": lst_iron_furnace2_bin1,
+                    },
+                    {
+                        "name": "کوره ۲ - پین ۲",
+                        "data": lst_iron_furnace2_bin2,
+                    },
+                    {
+                        "name": "کوره ۳ - پین ۱",
+                        "data": lst_iron_furnace3_bin1,
+                    },
+                    {
+                        "name": "کوره ۳ - پین ۲",
+                        "data": lst_iron_furnace3_bin2,
+                    }
+                ],
+                "lime": [
+                    {
+                        "name": "کوره ۱ - پین ۱",
+                        "data": lst_lime_furnace1_bin1,
+                    },
+                    {
+                        "name": "کوره ۱ - پین ۲",
+                        "data": lst_lime_furnace1_bin2,
+                    },
+                    {
+                        "name": "کوره ۲ - پین ۱",
+                        "data": lst_lime_furnace2_bin1,
+                    },
+                    {
+                        "name": "کوره ۲ - پین ۲",
+                        "data": lst_lime_furnace2_bin2,
+                    },
+                    {
+                        "name": "کوره ۳ - پین ۱",
+                        "data": lst_lime_furnace3_bin1,
+                    }
+                ],
+                "dolomite": [
+                    {
+                        "name": "کوره ۱ - پین ۱",
+                        "data": lst_dolomite_furnace1_bin1,
+                    },
+                    {
+                        "name": "کوره ۲ - پین ۱",
+                        "data": lst_dolomite_furnace2_bin1,
+                    },
+                    {
+                        "name": "کوره ۳ - پین ۱",
+                        "data": lst_dolomite_furnace3_bin1,
+                    }
+                ]
+            }
+            data_opt_w_in_time = {
+                "time": lst_times,
+                "data": a
+            }
             data_ = {
                 "opt_actions_output": lst_action_output,
-                "opt_w_in_time": str(opt_w_in_time),
-                "opt_B": str(opt_B),
-                "opt_shooting_list": str(opt_shooting_list),
-                "STATUS": str(STATUS),
-                "data": str(data)
+                "opt_w_in_time": data_opt_w_in_time,
+                # "opt_B": str(opt_B),
+                # "opt_shooting_list": str(opt_shooting_list),
+                # "STATUS": str(STATUS),
+                # "data": str(data)
             }
             return data_
         raise serializers.ValidationError(_("parameter or furnace setting not found."))
