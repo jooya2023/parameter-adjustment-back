@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from parameter.helper.calculations import read_cons, main_tread
 from parameter.models import FurnaceSetting, Parameter
-from parameter.api.tasks import calculation
+from parameter.helper.utils import request_factory_api, test_request_factory_api
 
 
 class FurnaceSettingSerializer(serializers.ModelSerializer):
@@ -17,7 +17,7 @@ class FurnaceSettingSerializer(serializers.ModelSerializer):
 
     def validate_is_active(self, value):
         if value:
-            Parameter.objects.all().update(is_active=False)
+            FurnaceSetting.objects.all().update(is_active=False)
             return value
         return value
 
@@ -27,13 +27,25 @@ class FurnaceSettingSerializer(serializers.ModelSerializer):
         is_active = validated_data.get("is_active", instance.is_active)
         if is_active:
             instance.is_active = is_active
-            Parameter.objects.all().update(is_active=False)
+            FurnaceSetting.objects.all().update(is_active=False)
         if is_active == False:
             raise serializers.ValidationError(
                 _("This is the default setting of the furnace, if you want it not to be the default, please choose another setting as the default.")
             )
         instance.save()
         return instance
+
+
+class FurnaceSettingDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FurnaceSetting
+        fields = ["id", "name", "data", "is_active", "created_at"]
+
+
+class FurnaceSettingListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FurnaceSetting
+        fields = ["id", "name", "is_active", "created_at"]
 
 
 class ParameterSerializer(serializers.ModelSerializer):
@@ -60,6 +72,18 @@ class ParameterSerializer(serializers.ModelSerializer):
             )
         instance.save()
         return instance
+
+
+class ParameterDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FurnaceSetting
+        fields = ["id", "name", "data", "is_active", "created_at"]
+
+
+class ParameterListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FurnaceSetting
+        fields = ["id", "name", "is_active", "created_at"]
 
 
 class ParameterCalculationSerializer(serializers.Serializer):
@@ -403,3 +427,14 @@ class ParameterCalculationSerializer(serializers.Serializer):
             }
             return data_
         raise serializers.ValidationError(_("parameter or furnace setting not found."))
+
+
+class ParameterApiFactorySerializer(serializers.Serializer):
+    data = serializers.JSONField()
+
+
+class ParameterUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    class Meta:
+        fields = ["file"]

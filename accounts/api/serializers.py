@@ -1,9 +1,61 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
+from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
-from accounts.models import User
+from accounts.models import User, UserType
 from accounts.helper.permissions_tree import create_permissions_tree_group
+
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.settings import api_settings
+
+from core.helper.redis import Redis
+
+
+class UserTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserType
+        fields = ["id", "name"]
+
+
+class UserListSerializer(serializers.ModelSerializer):
+    user_type = UserTypeSerializer()
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "user_type", "first_name", "last_name", "email"]
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "user_type", "first_name", "last_name", "email"]
+
+
+class MyUserSerializer(serializers.ModelSerializer):
+    user_type = UserTypeSerializer()
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "user_type", "email", "first_name", "last_name"]
+
+
+class MyUserUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "user_type", "email", "first_name", "last_name"]
+
+    def update(self, instance, validated_data):
+        instance.username = validated_data.get("username", instance.username)
+        instance.first_name = validated_data.get("first_name", instance.first_name)
+        instance.last_name = validated_data.get("last_name", instance.last_name)
+        instance.email = validated_data.get("email", instance.email)
+        instance.user_type = validated_data.get("user_type", instance.user_type)
+        instance.save()
+        return instance
 
 
 class LoginSerializer(serializers.ModelSerializer):
@@ -39,7 +91,42 @@ class LoginSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    pass
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'user_type',
+            'email',
+            'first_name',
+            'last_name',
+            'password',
+        ]
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    def validate(self, attrs):
+        username = attrs.get('username', '')
+
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError(_('This username already exists.'))
+
+        elif not username.isalnum():
+            raise serializers.ValidationError(_('the username should only contain alphanumeric characters.'))
+
+        return attrs
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        user = self.Meta.model(**validated_data)
+        if password is not None:
+            try:
+                validate_password(password, user)
+                user.set_password(password)
+                user.save()
+                return user
+            except ValidationError as val_err:
+                raise serializers.ValidationError(val_err.messages)
 
 
 class GroupDetailUpdateSerializer(serializers.ModelSerializer):
@@ -89,3 +176,39 @@ class GroupUpdateSerializer(serializers.Serializer):
 
     class Meta:
         fields = ["users"]
+
+
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    user_id = serializers.CharField(read_only=True)
+    username = serializers.CharField(read_only=True)
+
+    def validate(self, attrs):
+        old_refresh = attrs['refresh']
+        refresh = self.token_class(attrs["refresh"])
+
+        user_id = refresh.payload['user_id']
+        user = User.objects.get(id=user_id)
+        data = {'user_id': user.id, 'username': user.username, 'access': str(refresh.access_token),
+                'refresh': str(refresh)}
+
+        if api_settings.ROTATE_REFRESH_TOKENS:
+            if api_settings.BLACKLIST_AFTER_ROTATION:
+                try:
+                    # Attempt to blacklist the given refresh token
+                    refresh.blacklist()
+                except AttributeError:
+                    # If blacklist app not installed, `blacklist` method will
+                    # not be present
+                    pass
+
+            refresh.set_jti()
+            refresh.set_exp()
+            refresh.set_iat()
+
+            data["refresh"] = str(refresh)
+        new_refresh = data['refresh']
+        username = data['username']
+        redis_object = Redis()
+        redis_object.redis_set_new_refresh_token(new_refresh_token=new_refresh, old_refresh_token=old_refresh,
+                                                 username=username)
+        return data

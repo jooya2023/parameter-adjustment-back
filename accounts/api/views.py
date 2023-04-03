@@ -6,18 +6,57 @@ from django.contrib.auth.models import Group
 from django.shortcuts import get_object_or_404
 
 from accounts.api.serializers import (
+    UserListSerializer,
+    UserSerializer,
     LoginSerializer,
     RegisterSerializer,
     GroupSerializer,
     GroupDetailUpdateSerializer,
     PermissionsTreeForGroupSerializer,
     GroupDetailSerializer,
-    GroupUpdateSerializer
+    GroupUpdateSerializer,
+    CustomTokenRefreshSerializer,
+    MyUserSerializer,
+    MyUserUpdateSerializer
 )
 from accounts.models import User
 
 from core.helper.redis import Redis
 from core.helper.global_permissions import CustomDjangoModelPermissions
+
+
+class UserListAPIView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserListSerializer
+    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+
+
+class MyUserAPIView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = MyUserSerializer
+
+    def get_object(self):
+        return get_object_or_404(User, id=1)
+
+
+class MyUserUpdateAPIView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = MyUserUpdateSerializer
+
+    def get_object(self):
+        return get_object_or_404(User, id=1)
+
+
+class UserUpdateDetailDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+    lookup_field = "id"
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return UserListSerializer
+        return UserSerializer
 
 
 class LoginGenericView(generics.GenericAPIView):
@@ -37,8 +76,19 @@ class LoginGenericView(generics.GenericAPIView):
         return Response(serializer.data, status=200)
 
 
+class CustomRefreshTokenAPIView(generics.CreateAPIView):
+    serializer_class = CustomTokenRefreshSerializer
+
+
 class RegisterGenericView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=201)
 
 
 class GroupListCreateAPIView(generics.ListCreateAPIView):
