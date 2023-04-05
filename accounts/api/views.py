@@ -1,6 +1,7 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.views import TokenRefreshView
 
 from django.contrib.auth.models import Group
 from django.shortcuts import get_object_or_404
@@ -36,7 +37,7 @@ class MyUserAPIView(generics.RetrieveAPIView):
     serializer_class = MyUserSerializer
 
     def get_object(self):
-        return get_object_or_404(User, id=1)
+        return get_object_or_404(User, id=self.request.user.id)
 
 
 class MyUserUpdateAPIView(generics.UpdateAPIView):
@@ -44,7 +45,7 @@ class MyUserUpdateAPIView(generics.UpdateAPIView):
     serializer_class = MyUserUpdateSerializer
 
     def get_object(self):
-        return get_object_or_404(User, id=1)
+        return get_object_or_404(User, id=self.request.user.id)
 
 
 class UserUpdateDetailDeleteAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -76,7 +77,7 @@ class LoginGenericView(generics.GenericAPIView):
         return Response(serializer.data, status=200)
 
 
-class CustomRefreshTokenAPIView(generics.CreateAPIView):
+class CustomRefreshTokenAPIView(TokenRefreshView):
     serializer_class = CustomTokenRefreshSerializer
 
 
