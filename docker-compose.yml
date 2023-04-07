@@ -67,21 +67,6 @@ services:
       - parameter
     restart: on-failure
 
-# Worker (Celery)--------------------------------------------------------------------------------------------
-  worker:
-    image: parameter_api:latest
-    env_file:
-      - .env
-    container_name: worker_celery
-    command: celery -A core worker --loglevel=info
-    depends_on:
-      - parameter-api
-      - parameter-redis
-    networks:
-      - parameter
-    volumes:
-      - parameter_worker_data:/data
-    restart: always
 
 volumes:
     parameter_media_data:
