@@ -18,7 +18,9 @@ from accounts.api.serializers import (
     GroupUpdateSerializer,
     CustomTokenRefreshSerializer,
     MyUserSerializer,
-    MyUserUpdateSerializer
+    MyUserUpdateSerializer,
+    ChangePasswordSerializer,
+    LogoutSerializer
 )
 from accounts.models import User
 
@@ -75,6 +77,29 @@ class LoginGenericView(generics.GenericAPIView):
         refresh_token = serializer.data["tokens"]["refresh"]
         self.redis.redis_add_refresh_token(username, refresh_token)
         return Response(serializer.data, status=200)
+
+
+class LogoutApiView(generics.GenericAPIView):
+    """logout user"""
+    serializer_class = LogoutSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(status=200)
+
+
+class ChangePassword(generics.GenericAPIView):
+    """change password user"""
+    queryset = User.objects.all()
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+
+    def patch(self, request):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        return Response(status=200)
 
 
 class CustomRefreshTokenAPIView(TokenRefreshView):

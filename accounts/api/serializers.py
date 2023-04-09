@@ -43,7 +43,6 @@ class MyUserSerializer(serializers.ModelSerializer):
 
 
 class MyUserUpdateSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = ["id", "username", "user_type", "email", "first_name", "last_name"]
@@ -212,3 +211,31 @@ class CustomTokenRefreshSerializer(TokenRefreshSerializer):
         redis_object.redis_set_new_refresh_token(new_refresh_token=new_refresh, old_refresh_token=old_refresh,
                                                  username=username)
         return data
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        password = attrs.get("password")
+        user_id = self.context.get("request").user.id
+        if User.objects.filter(id=user_id).exists():
+            user = User.objects.get(id=user_id)
+            user.set_password(password)
+            user.save()
+
+            return (user,)
+        raise serializers.ValidationError(_("user dose not exists."))
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    class Meta:
+        fields = ['refresh']
+
+    def validate(self, attrs):
+        refresh = attrs.get('refresh', '')
+        redis_object = Redis()
+        redis_object.redis_delete_refresh_token(refresh)
+        return attrs
