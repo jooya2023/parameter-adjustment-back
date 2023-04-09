@@ -1,9 +1,7 @@
 import os
 import copy
 import math
-import os
 import time
-import functools
 
 import numpy as np
 
@@ -31,11 +29,8 @@ def operation(W_in, action_in, time_in):
                 for z in range(len(W_out[j][k])):
                     if j == 0 and k == 2:
                         W_out[j][k][z] += B[j][k][z][i - D_R[j][k]] * K[j]
-                    elif j == 1 and k != 2:
-                        try:
-                            W_out[j][k][z] += B[j][k][z][i - D_R[j][k]] * K[j]
-                        except:
-                            pass
+                    elif j == 1:
+                        W_out[j][k][z] += B[j][k][z][i - D_R[j][k]] * K[j]
                     elif j == 2 and k == 2:
                         W_out[j][k][z] += B[j][k][z][i - D_R[j][k]] * K[j]
                     else:
@@ -57,7 +52,7 @@ def operation(W_in, action_in, time_in):
                 W_out[0][2][1] -= CONS[0][2][i]
 
         # LIM
-        for j in range(2):
+        for j in range(3):
             if W_out[1][j][0] > W_out[1][j][1]:
                 if W_out[1][j][1] - s_floor[1][j][1] > CONS[1][j][i]:
                     W_out[1][j][1] -= CONS[1][j][i]
@@ -224,6 +219,7 @@ class Node:
 
                     if t_upper_in < 5:
                         no_action = [10, -1, -1, -1]
+                        no_action_spend_time.append((self.time_dec_point, no_action[0]))
                         self.W_dec_point, self.time_dec_point = operation(self.W_dec_point, no_action,
                                                                           self.time_dec_point)
                         self.t_upper = []
@@ -243,6 +239,7 @@ class Node:
 
                     if t_upper_in < 2:
                         no_action = [10, -1, -1, -1]
+                        no_action_spend_time.append((self.time_dec_point, no_action[0]))
                         self.W_dec_point, self.time_dec_point = operation(self.W_dec_point, no_action,
                                                                           self.time_dec_point)
                         self.t_upper = []
@@ -268,9 +265,14 @@ class Node:
 
         for d in disables:
             for to in self.t_opr:
-                if to[1] == d[1] and to[2] == d[2] and to[3] == d[3]:
-                    self.t_opr.remove(to)
-                    continue
+                if to[3] == 2:
+                    if to[1] == d[1] and to[2] == d[2]:
+                        self.t_opr.remove(to)
+                        continue
+                else:
+                    if to[1] == d[1] and to[2] == d[2] and to[3] == d[3]:
+                        self.t_opr.remove(to)
+                        continue
 
     def bin_info_for_next_actions(self):
 
@@ -285,8 +287,6 @@ class Node:
                 if (i == 0 and j == 0) or (i == 0 and j == 1):
                     self.t_opr.append((self.compute_t_opr(i, j, 0), i, j, 0))
                     self.t_opr.append((self.compute_t_opr(i, j, 1), i, j, 1))
-                elif i == 1 and j == 2:
-                    self.t_opr.append((self.compute_t_opr(i, j, 0), i, j, 0))
                 elif i == 2 and (j == 0 or j == 1):
                     self.t_opr.append((self.compute_t_opr(i, j, 0), i, j, 0))
                 else:
@@ -305,7 +305,7 @@ class Node:
 
         bin_num = -1
 
-        if (act_1[1] == 1 and act_1[2] != 2) or (act_1[1] == 2 and act_1[2] == 2):
+        if (act_1[1] == 1) or (act_1[1] == 2 and act_1[2] == 2):
             for x in self.t_upper:
                 if x[1] == act_1[1] and x[2] == act_1[2]:
                     t_upper_f = int(x[0])
@@ -327,14 +327,6 @@ class Node:
         have_delay, delay_val = delay_on_switch(act_1, self.action)
 
         out_time_info_1 = -1
-
-        # if self.action is not None and (
-        #         delay_on_switch(self.action, act_1)[1] == 0 or delay_on_switch(self.t_opr[1], act_1)[1] == 0):
-        #     i, j, k = act_1[1], act_1[2], act_1[3]
-        #
-        #     empty_w = max((0.65 * storage[i][j][k]) - self.W_dec_point[i][j][k], 0)
-        #
-        #     t_upper_f = int(min(t_upper_f, (empty_w / K[i])))
 
         for i in range(t_upper_f, T_MIN_Charge[act_1[1]], -1):
             find_answer = True
@@ -366,21 +358,6 @@ class Node:
 
         if False:
             pass
-        # if len(self.possible_actions) == 0:
-        #     self.t_upper.sort(key=lambda tup: tup[0])
-        #
-        #     max_t_upper = self.t_upper[-1]
-        #
-        #     for y in range(min(3 * T_MIN_Charge[max_t_upper[1]], max_t_upper[0]),
-        #                    max(min(3 * T_MIN_Charge[max_t_upper[1]], max_t_upper[0]) - 2,
-        #                        T_MIN_Charge[max_t_upper[1]]), -1):
-        #         self.possible_actions.append((y, max_t_upper[1], max_t_upper[2], max_t_upper[3]))
-        #
-        #     return
-
-        # if len(self.possible_actions) == 0:
-        #     return
-
         else:
             ## second action
 
@@ -390,7 +367,7 @@ class Node:
 
             bin_num = -1
 
-            if (act_1[1] == 1 and act_1[2] != 2) or (act_1[1] == 2 and act_1[2] == 2):
+            if (act_1[1] == 1) or (act_1[1] == 2 and act_1[2] == 2):
                 for x in self.t_upper:
                     if x[1] == act_1[1] and x[2] == act_1[2]:
                         t_upper_f = int(x[0])
@@ -412,14 +389,6 @@ class Node:
             have_delay, delay_val = delay_on_switch(act_1, self.action)
 
             out_time_info_2 = -1
-
-            # if self.action is not None and (
-            #         delay_on_switch(self.action, act_1)[1] == 0 or delay_on_switch(self.t_opr[2], act_1)[1] == 0):
-            #     i, j, k = act_1[1], act_1[2], act_1[3]
-            #
-            #     empty_w = max((0.65 * storage[i][j][k]) - self.W_dec_point[i][j][k], 0)
-            #
-            #     t_upper_f = int(min(t_upper_f, (empty_w / K[i])))s
 
             for i in range(t_upper_f, T_MIN_Charge[act_1[1]], -1):
                 find_answer = True
@@ -480,10 +449,6 @@ class Node:
                 self.del_B_go_back()
                 return True, None, None, None, -1
 
-        # if self.check_65percent_shooting(chosen_action):
-        #     self.del_B_go_back()
-        #     return True, None, None, None, -1
-
         new_W, new_time = spend_switch_time(self.W_dec_point, chosen_action, self.action, self.time_dec_point)
 
         if not check_w_validation(new_W):
@@ -515,6 +480,11 @@ class Node:
 
     def calc_t_opr(self, i, j, k, cons):
         w_calc = copy.deepcopy(self.W_dec_point[i][j][k])
+
+        if i == 0 and j != 2:
+            if w_calc >= 0.65 * storage[i][j][k]:
+                return 1000
+
         s_floor_in = s_floor[i][j][k]
         timer = 0
 
@@ -635,50 +605,13 @@ class Node:
 
 def read_cons():
     global MAX_TIME_DURATION, CONS
-    # Test:
-    # time: 4670
-    # df = pd.read_excel('./Data/Test-Data/input--new.xlsx', sheet_name='consumption', header=None)
-    # # time: 1058
-    # df = pd.read_excel('./Data/Test-Data/input_0812101.xlsx', sheet_name='consumption', header=None)
-    # # time: 537
-    # df = pd.read_excel('./Data/Test-Data/consumption_201201.xlsx', sheet_name='cons_500min_bkt1', header=None)
-    # # time: 537
-    # df = pd.read_excel('./Data/Test-Data/consumption_201201.xlsx', sheet_name='cons_500min_bkt13', header=None)
-    # # time: 290
-    # df = pd.read_excel('./Data/Test-Data/consumption_201201.xlsx', sheet_name='cons_300min_bkt13', header=None)
-    # # time: 1450
-    # df = pd.read_excel("./CONS.xlsx", sheet_name='consumption', header=None)
-    df = pd.read_excel(os.path.join(settings.BASE_DIR, 'parameter/helper/CONS.xlsx'), sheet_name='consumption',
-                       header=None)
-    # # time: 1450
-    # df = pd.read_excel('./Data/Test-Data/consumption_12_23.xlsx', sheet_name='consumption2_12_to_23', header=None)
-    # # time: 900
-    # df = pd.read_excel('./Data/Test-Data/consumption_12_23.xlsx', sheet_name='consumption_300_60_300', header=None)
-
-    # df = pd.read_excel('./Data/inititalization.xlsx', header=None)
-    # df = pd.read_excel('./Data/input_191101.xlsx', sheet_name='consumption', header=None)
-    # df = pd.read_excel('./Data/input_191101-edit.xlsx', sheet_name='consumption', header=None)
-    # df = pd.read_excel('./Data/input_191101-e2.xlsx', sheet_name='consumption', header=None)
-    # df = pd.read_excel('./Data/input_0812101.xlsx', sheet_name='consumption', header=None)
-    # df = pd.read_excel('./Data/input--new.xlsx', sheet_name='consumption', header=None)
-    # df = pd.read_excel('./Data/input_0812101 - Copy.xlsx', sheet_name='consumption', header=None)
-    # df = pd.read_excel('./Data/input2_0912101.xlsx', sheet_name='consumption', header=None)
-    # df = pd.read_excel('./Data/input3_0912101.xlsx', sheet_name='consumption', header=None)
-
+    df = pd.read_excel(os.path.join(settings.BASE_DIR, "parameter/helper/CONS.xlsx"), sheet_name='consumption', header=None)
+    # df = pd.read_excel("CONS.xlsx", sheet_name='consumption', header=None)
     for i in range(3):
         for j in range(3):
             CONS[i][j] = df[3 * i + j].tolist()
 
     return CONS
-
-
-def save_actions():
-    df = pd.DataFrame(action_history, columns=['time', 'i', 'j', 'k'])
-
-    df.to_excel(f'Final-Answer/log-actions.xlsx')
-
-    file_name = f'/Data/Test-Data/Result/1/log-actions-output.xlsx'
-    df.to_excel(file_name)
 
 
 def fill_gap():
@@ -729,8 +662,7 @@ def save_w_in_time():
 
     df_w_in_time = pd.DataFrame(w_list,
                                 columns=['time', '0,0,0', '0,0,1', '0,1,0', '0,1,1', '0,2,0', '0,2,1', '1,0,0', '1,0,1',
-                                         '1,1,0',
-                                         '1,1,1', '1,2,0', '2,0,0', '2,1,0', '2,2,0', '2,2,1'])
+                                         '1,1,0', '1,1,1', '1,2,0', '1,2,1', '2,0,0', '2,1,0', '2,2,0', '2,2,1'])
 
     # file_name = f'{path}/log-weight.xlsx'
     # df_w_in_time.to_excel(file_name)
@@ -810,7 +742,7 @@ def save_shooting_list():
 
 
 def save_log():
-    global opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list
+    global opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list, no_action_spend_time
 
     opt_actions_output = save_actions_output()
 
@@ -832,7 +764,7 @@ def clac_cons_integral():
     return ary
 
 
-def furnace_converter(dr):
+def furnace_converter_bin2matrix(dr):
     num = dr[1]
 
     if num == 1:
@@ -861,9 +793,41 @@ def furnace_converter(dr):
         return dr[0], 2, 2, 0
 
 
+def furnace_converter_trix2bin(mt):
+    i, j, k = mt[1:]
+
+    if i == 0:
+        if j == 0:
+            if k == 0:
+                return 1
+            elif k == 1:
+                return 2
+        elif j == 1:
+            if k == 0:
+                return 3
+            elif k == 1:
+                return 4
+        elif j == 2:
+            return 56
+    elif i == 1:
+        if j == 0:
+            return 7
+        elif j == 1:
+            return 8
+        elif j == 2:
+            return 9
+    elif i == 2:
+        if j == 0:
+            return 10
+        elif j == 1:
+            return 11
+        elif j == 2:
+            return 12
+
+
 def add_disables():
     for dr in disables_raw:
-        disables.append(furnace_converter(dr))
+        disables.append(furnace_converter_bin2matrix(dr))
 
 
 def add_B_first_11():
@@ -954,7 +918,7 @@ def zero_point():
 #
 # path = './Data/Test-Data/Result/consumption_12_23-consumption2_12_to_23'
 # path = './Data/Test-Data/Result/consumption_12_23-consumption_300_60_300'
-# path = './Data/Test-Data/Result/consumption_12_23-consumption_12_to_23'
+path = './Data/Test-Data/Result/consumption_12_23-consumption_12_to_23'
 
 node_counter = 0
 
@@ -1040,9 +1004,33 @@ opt_actions_output = None
 opt_w_in_time = None
 opt_B = None
 opt_shooting_list = None
+no_action_spend_time = []
 
 
 # - - - - - - - - - - - - - - -
+
+
+def B_first_11_converter(matrix_input):
+    return pd.DataFrame({'time': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                         '1': [row[0] for row in matrix_input],
+                         '2': [row[1] for row in matrix_input],
+                         '3': [row[2] for row in matrix_input],
+                         '4': [row[3] for row in matrix_input],
+                         '5': [row[4] for row in matrix_input],
+                         '6': [row[5] for row in matrix_input],
+                         '7': [row[6] for row in matrix_input],
+                         '8': [row[7] for row in matrix_input],
+                         '9': [row[8] for row in matrix_input],
+                         '10': [row[9] for row in matrix_input],
+                         '11': [row[10] for row in matrix_input],
+                         '12': [row[11] for row in matrix_input]})
+
+
+def fill_11_first_W_in_time():
+    for i in range(11):
+        W_in_time[i] = copy.deepcopy(W)
+
+
 def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input, B_first_11_input,
                disables_raw_input, charge_instantly_choice_input=False):
     global cons_integral, charge_instantly_choice, B, node, max_time_go_forward, W_in_time, action_output, start_time_helper, level_check, max_time_B, max_time_W_in_time, max_time_action_output, STATUS
@@ -1057,13 +1045,15 @@ def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_in
     D_R = copy.deepcopy(D_R_input)
     D_E = copy.deepcopy(D_E_input)
     CONS = copy.deepcopy(CONS_input)
-    B_first_11 = copy.deepcopy(B_first_11_input)
+    B_first_11 = copy.deepcopy(B_first_11_converter(B_first_11_input))
     disables_raw = copy.deepcopy(disables_raw_input)
     charge_instantly_choice = charge_instantly_choice_input
 
     B = np.zeros([3, 3, 2, MAX_TIME_DURATION + 115])
 
     W_in_time = [[[[] for j in range(3)] for i in range(3)] for z in range(MAX_TIME_DURATION + 350)]
+
+    fill_11_first_W_in_time()
 
     cons_integral = clac_cons_integral()
 
@@ -1086,8 +1076,8 @@ def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_in
 
             probable_risk_bin = node.t_opr[0]
 
-        if time.time() - start_time > MAX_TIME_EXIT:
-            break
+        # if time.time() - start_time > MAX_TIME_EXIT:
+        #     break
 
         # is_full()
         if zero_point():
@@ -1135,11 +1125,14 @@ def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_in
 
     end_time = time.time()
 
-    # print('Max Time Reach: ', max_time_go_forward)
-    # print('Duration: ', end_time - start_time)
-    # print('Status: ', STATUS)
+    print('Max Time Reach: ', max_time_go_forward)
+    print('Duration: ', end_time - start_time)
+    print('Status: ', STATUS)
 
-    return opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list, STATUS, [max_time_go_forward, probable_risk_bin]
+    return opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list, STATUS, no_action_spend_time, [
+        max_time_go_forward,
+        furnace_converter_trix2bin(
+            probable_risk_bin)]
 
 
 # ___________main___________
@@ -1147,30 +1140,30 @@ def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_in
 if __name__ == '__main__':
     W_input = [[[] for j in range(3)] for i in range(3)]
 
-    W_input[0][0] = [40.8, 48.0]
-    W_input[0][1] = [40.6, 40.4]
-    W_input[0][2] = [35.6, 75.2]
+    W_input[0][0] = [28.8, 28.0]
+    W_input[0][1] = [28.6, 28.4]
+    W_input[0][2] = [45.6, 25.2]
 
-    W_input[1][0] = [8.32, 0]
-    W_input[1][1] = [8.88, 0]
-    W_input[1][2] = [8.8]
+    W_input[1][0] = [5.32, 2]
+    W_input[1][1] = [5.88, 2]
+    W_input[1][2] = [5.8, 3]
 
-    W_input[2][0] = [6.68]
-    W_input[2][1] = [7.6]
-    W_input[2][2] = [8.68, 0]
+    W_input[2][0] = [5.68]
+    W_input[2][1] = [5.6]
+    W_input[2][2] = [7.68, 4]
 
     s_floor_input = [[[] for j in range(3)] for i in range(3)]
-    s_floor_input[0][0] = [0, 0]
-    s_floor_input[0][1] = [0, 0]
-    s_floor_input[0][2] = [0, 0]
+    s_floor_input[0][0] = [2, 2]
+    s_floor_input[0][1] = [2, 2]
+    s_floor_input[0][2] = [2, 2]
 
-    s_floor_input[1][0] = [0, 0]
-    s_floor_input[1][1] = [0, 0]
-    s_floor_input[1][2] = [0]
+    s_floor_input[1][0] = [0.2, 0.1]
+    s_floor_input[1][1] = [0.2, 0.1]
+    s_floor_input[1][2] = [0.2, 0.1]
 
-    s_floor_input[2][0] = [0]
-    s_floor_input[2][1] = [0]
-    s_floor_input[2][2] = [0, 0]
+    s_floor_input[2][0] = [0.2]
+    s_floor_input[2][1] = [0.2]
+    s_floor_input[2][2] = [0.2, 0.1]
 
     storage_input = [[[] for j in range(3)] for i in range(3)]
     storage_input[0][0] = [60, 60]
@@ -1179,7 +1172,7 @@ if __name__ == '__main__':
 
     storage_input[1][0] = [12, 8]
     storage_input[1][1] = [12, 8]
-    storage_input[1][2] = [12]
+    storage_input[1][2] = [12, 8]
 
     storage_input[2][0] = [12]
     storage_input[2][1] = [12]
@@ -1194,21 +1187,19 @@ if __name__ == '__main__':
                  [2, 2, 2],
                  [2, 2, 2]]
 
-    disables_raw_input = [(10, 9)]
+    disables_raw_input = [(10, 9), (4, 12)]
 
-    B_first_11_input = pd.DataFrame({'time': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                                     '1': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '2': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '3': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '4': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '5': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '6': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '7': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '8': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '9': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '10': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '11': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                                     '12': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]})
+    B_first_11_input = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
     charge_instantly_choice_input = False
 

@@ -122,7 +122,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = self.Meta.model(**validated_data)
         if password is not None:
             try:
-                validate_password(password, user)
                 user.set_password(password)
                 user.save()
                 return user

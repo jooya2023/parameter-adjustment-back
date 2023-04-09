@@ -6,6 +6,7 @@ from rest_framework import exceptions
 from rest_framework.parsers import FormParser, MultiPartParser
 
 from django.utils.translation import gettext_lazy as _
+from django.shortcuts import get_object_or_404
 
 from parameter.api.serializers import (
     FurnaceSettingSerializer,
@@ -78,7 +79,8 @@ class ParameterRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
 
 class ParameterCalculationAPIView(generics.ListAPIView):
     serializer_class = ParameterCalculationSerializer
-    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+
+    # permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         serializer = self.serializer_class(request.data)
@@ -87,22 +89,36 @@ class ParameterCalculationAPIView(generics.ListAPIView):
 
 class ParameterApiFactoryAPIView(generics.ListAPIView):
     serializer_class = ParameterApiFactorySerializer
-    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         data = test_request_factory_api()
         return Response({"data": data})
 
 
-class ParameterUploadFileAPIView(generics.CreateAPIView):
+class ParameterUploadFileAPIView(generics.UpdateAPIView):
+    queryset = FurnaceSetting.objects.all()
     serializer_class = ParameterUploadSerializer
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def get_object(self):
+        return get_object_or_404(FurnaceSetting, id=self.kwargs.get("id"))
+
+    def update(self, request, *args, **kwargs):
         if not request.FILES:
             raise exceptions.ValidationError(_("Please upload the desired excel file."))
         file = request.FILES['file']
-        data = read_excel_analyze(file)
-        return Response(data)
+        instance = self.get_object()
+        data = read_excel_analyze(file, instance.data)
+        instance.data = data
+        instance.save()
+        data = {
+            "name": instance.name,
+            "data": instance.data,
+            "is_active": instance.is_active,
+            "created_at": instance.created_at,
+            "updates_at": instance.updated_at
+        }
+        return Response(data, status=200)
 
