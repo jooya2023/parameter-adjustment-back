@@ -196,11 +196,17 @@ class CallMain:
         entrymin_lst = []
         entryduration_lst = []
         for item in self.parameter_obj[0].data["gatesStatus"]:
-            binid_lst.append(item["gate"]["id"])
-            time_lst = item["time"].split(":")
-            entryhour_lst.append(time_lst[0])
-            entrymin_lst.append(time_lst[1])
-            entryduration_lst.append(item["duration"])
+            if item["gate"]:
+                binid_lst.append(item["gate"]["id"])
+                time_lst = item["time"].split(":")
+                entryhour_lst.append(time_lst[0])
+                entrymin_lst.append(time_lst[1])
+                entryduration_lst.append(item["duration"])
+            else:
+                binid_lst = [0, 0, 0]
+                entryhour_lst = [0, 0, 0]
+                entrymin_lst = [0, 0, 0]
+                entryduration_lst = [0, 0, 0]
 
         wzero = np.zeros((11, 12))
         current_time = datetime.datetime.now()

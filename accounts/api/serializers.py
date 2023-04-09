@@ -239,3 +239,17 @@ class LogoutSerializer(serializers.Serializer):
         redis_object = Redis()
         redis_object.redis_delete_refresh_token(refresh)
         return attrs
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        password = attrs.get("password")
+        user_id = self.context.get("user_id")
+        if User.objects.filter(id=user_id).exists():
+            user = User.objects.get(id=user_id)
+            user.set_password(password)
+            user.save()
+            return (user,)
+        raise serializers.ValidationError(_("user dose not exists."))

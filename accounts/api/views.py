@@ -20,7 +20,8 @@ from accounts.api.serializers import (
     MyUserSerializer,
     MyUserUpdateSerializer,
     ChangePasswordSerializer,
-    LogoutSerializer
+    LogoutSerializer,
+    ResetPasswordSerializer
 )
 from accounts.models import User
 
@@ -100,6 +101,17 @@ class ChangePassword(generics.GenericAPIView):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         return Response(status=200)
+
+
+class RestPassword(generics.GenericAPIView):
+    queryset = User.objects.all()
+    serializer_class = ResetPasswordSerializer
+    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+
+    def patch(self, request, id):
+        serializer = self.serializer_class(data=request.data, context={"user_id": id})
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=200)
 
 
 class CustomRefreshTokenAPIView(TokenRefreshView):
