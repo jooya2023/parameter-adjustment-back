@@ -9,7 +9,7 @@ from pickle5 import pickle
 
 from parameter.helper.calculations import main_tread
 from parameter.helper.api_cons import create_consumption
-from parameter.models import Parameter, FurnaceSetting
+from parameter.models import Parameter, FurnaceSetting, ParameterCalc
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -36,69 +36,67 @@ def request_factory_api(from_date, to_date):
 
 
 def read_excel_analyze(file, data_instance):
-    excel_read = pandas.read_excel(file)
-    data_s1 = excel_read["s1"].tolist()
-    lst_data_s1 = []
-    data_sb1 = excel_read["sb1"].tolist()
-    lst_data_sb1 = []
-    data_s2 = excel_read["s2"].tolist()
-    lst_data_s2 = []
-    data_sb2 = excel_read["sb2"].tolist()
-    lst_data_sb2 = []
-    data_s3 = excel_read["s3"].tolist()
-    lst_data_s3 = []
-    data_sb3 = excel_read["sb3"].tolist()
-    lst_data_sb3 = []
+    excel_read_f1 = pandas.read_excel(file, sheet_name="f1")
+    data_s1 = excel_read_f1["s1"].to_numpy(dtype='float')
+    data_sb1 = excel_read_f1["sb1"].to_numpy(dtype='float')
 
-    for i in data_s1:
-        if str(i) == "nan":
-            lst_data_s1.append(float(0.0))
-        else:
-            lst_data_s1.append(i)
+    excel_read_f2 = pandas.read_excel(file, sheet_name="f2")
+    data_s2 = excel_read_f2["s2"].to_numpy(dtype='float')
+    data_sb2 = excel_read_f2["sb2"].to_numpy(dtype='float')
 
-    for i in data_sb1:
-        if str(i) == "nan":
-            lst_data_sb1.append(float(0.0))
-        else:
-            lst_data_sb1.append(i)
-    # -----------------------------------------
+    excel_read_f3 = pandas.read_excel(file, sheet_name="f3")
+    data_s3 = excel_read_f3["s3"].to_numpy(dtype='float')
+    data_sb3 = excel_read_f3["sb3"].to_numpy(dtype='float')
 
-    for i in data_s2:
-        if str(i) == "nan":
-            lst_data_s2.append(float(0.0))
-        else:
-            lst_data_s2.append(i)
-
-    for i in data_sb2:
-        if str(i) == "nan":
-            lst_data_sb2.append(float(0.0))
-        else:
-            lst_data_sb2.append(i)
-
-    # -----------------------------------------------
-
-    for i in data_s3:
-        if str(i) == "nan":
-            lst_data_s3.append(float(0.0))
-        else:
-            lst_data_s3.append(i)
-
-    for i in data_sb3:
-        if str(i) == "nan":
-            lst_data_sb3.append(float(0.0))
-        else:
-            lst_data_sb3.append(i)
+    # for i in data_s1:
+    #     if str(i) == "nan":
+    #         lst_data_s1.append(float(0.0))
+    #     else:
+    #         lst_data_s1.append(i)
+    #
+    # for i in data_sb1:
+    #     if str(i) == "nan":
+    #         lst_data_sb1.append(float(0.0))
+    #     else:
+    #         lst_data_sb1.append(i)
+    # # -----------------------------------------
+    #
+    # for i in data_s2:
+    #     if str(i) == "nan":
+    #         lst_data_s2.append(float(0.0))
+    #     else:
+    #         lst_data_s2.append(i)
+    #
+    # for i in data_sb2:
+    #     if str(i) == "nan":
+    #         lst_data_sb2.append(float(0.0))
+    #     else:
+    #         lst_data_sb2.append(i)
+    #
+    # # -----------------------------------------------
+    #
+    # for i in data_s3:
+    #     if str(i) == "nan":
+    #         lst_data_s3.append(float(0.0))
+    #     else:
+    #         lst_data_s3.append(i)
+    #
+    # for i in data_sb3:
+    #     if str(i) == "nan":
+    #         lst_data_sb3.append(float(0.0))
+    #     else:
+    #         lst_data_sb3.append(i)
 
     lst_furnaces = []
     for item_instance in data_instance["furnaces"]:
         if item_instance["id"] == 1:
-            item_instance["DRI_usage"] = {"s": lst_data_s1, "sb": lst_data_sb1}
+            item_instance["DRI_usage"] = {"s": list(data_s1), "sb": list(data_sb1)}
             lst_furnaces.append(item_instance)
         if item_instance["id"] == 2:
-            item_instance["DRI_usage"] = {"s": lst_data_s2, "sb": lst_data_sb2}
+            item_instance["DRI_usage"] = {"s": list(data_s2), "sb": list(data_sb2)}
             lst_furnaces.append(item_instance)
         if item_instance["id"] == 3:
-            item_instance["DRI_usage"] = {"s": lst_data_s3, "sb": lst_data_sb3}
+            item_instance["DRI_usage"] = {"s": list(data_s3), "sb": list(data_sb3)}
             lst_furnaces.append(item_instance)
 
     data_instance["furnaces"] = lst_furnaces
@@ -232,10 +230,141 @@ class CallMain:
         B_first_11_input = wzeroall.values.tolist()
         return B_first_11_input
 
-    def main(self, W_input, s_floor_input, storage_input, K_input,
-             D_R_input, D_E_input, disables_raw_input, charge_instantly_choice_input=False):
-        CONS_input = self.cons_input()
-        B_first_11_input = self.b_first_11_input()
+    def create_input_main(self):
+        furnace_setting = FurnaceSetting.objects.filter(is_active=True)
+        parameter_obj = Parameter.objects.filter(is_active=True)
+        if furnace_setting.exists() and parameter_obj.exists():
+            furnace_1 = [item for item in furnace_setting[0].data["furnaces"] if item["id"] == 1][0]
+            furnace_2 = [item for item in furnace_setting[0].data["furnaces"] if item["id"] == 2][0]
+            furnace_3 = [item for item in furnace_setting[0].data["furnaces"] if item["id"] == 3][0]
+
+            parameter_1 = [item for item in parameter_obj[0].data["furnaces"] if item["id"] == 1][0]
+            parameter_2 = [item for item in parameter_obj[0].data["furnaces"] if item["id"] == 2][0]
+            parameter_3 = [item for item in parameter_obj[0].data["furnaces"] if item["id"] == 3][0]
+
+            W_input = [[[] for j in range(3)] for i in range(3)]
+
+            W_input[0][0] = [[item["amount"] for item in parameter_1["tanks"] if item["id"] == 1][0],
+                             [item["amount"] for item in parameter_1["tanks"] if item["id"] == 2][0]]
+            W_input[0][1] = [[item["amount"] for item in parameter_2["tanks"] if item["id"] == 1][0],
+                             [item["amount"] for item in parameter_2["tanks"] if item["id"] == 2][0]]
+            W_input[0][2] = [[item["amount"] for item in parameter_3["tanks"] if item["id"] == 1][0],
+                             [item["amount"] for item in parameter_3["tanks"] if item["id"] == 2][0]]
+
+            W_input[1][0] = [[item["amount"] for item in parameter_1["tanks"] if item["id"] == 3][0],
+                             [item["amount"] for item in parameter_1["tanks"] if item["id"] == 5][0]]
+            W_input[1][1] = [[item["amount"] for item in parameter_2["tanks"] if item["id"] == 3][0],
+                             [item["amount"] for item in parameter_2["tanks"] if item["id"] == 5][0]]
+            W_input[1][2] = [[item["amount"] for item in parameter_3["tanks"] if item["id"] == 3][0],
+                             [item["amount"] for item in parameter_3["tanks"] if item["id"] == 5][0]]
+
+            W_input[2][0] = [[item["amount"] for item in parameter_1["tanks"] if item["id"] == 4][0]]
+            W_input[2][1] = [[item["amount"] for item in parameter_2["tanks"] if item["id"] == 4][0]]
+            W_input[2][2] = [[item["amount"] for item in parameter_3["tanks"] if item["id"] == 4][0],
+                             [item["amount"] for item in parameter_3["tanks"] if item["id"] == 5][0]]
+
+            # W_input[0][0] = [28.8, 28.0]
+            # W_input[0][1] = [28.6, 28.4]
+            # W_input[0][2] = [45.6, 25.2]
+            #
+            # W_input[1][0] = [5.32, 2]
+            # W_input[1][1] = [5.88, 2]
+            # W_input[1][2] = [5.8, 3]
+            #
+            # W_input[2][0] = [5.68]
+            # W_input[2][1] = [5.6]
+            # W_input[2][2] = [7.68, 4]
+
+            # min capacity a matter
+            s_floor_input = [[[] for j in range(3)] for i in range(3)]
+            s_floor_input[0][0] = [furnace_1["minCapacity"]["iron"], furnace_1["minCapacity"]["iron"]]
+            s_floor_input[0][1] = [furnace_1["minCapacity"]["lime"], furnace_1["minCapacity"]["lime"]]
+            s_floor_input[0][2] = [furnace_1["minCapacity"]["dolomite"], furnace_1["minCapacity"]["dolomite"]]
+
+            s_floor_input[1][0] = [furnace_2["minCapacity"]["iron"], 0.1]
+            s_floor_input[1][1] = [furnace_2["minCapacity"]["lime"], 0.1]
+            s_floor_input[1][2] = [furnace_2["minCapacity"]["dolomite"], 0.1]
+
+            s_floor_input[2][0] = [furnace_3["minCapacity"]["iron"]]
+            s_floor_input[2][1] = [furnace_3["minCapacity"]["lime"]]
+            s_floor_input[2][2] = [furnace_3["minCapacity"]["dolomite"], 0.1]
+
+            # s_floor_input[0][0] = [2, 2]
+            # s_floor_input[0][1] = [2, 2]
+            # s_floor_input[0][2] = [2, 2]
+            #
+            # s_floor_input[1][0] = [0.2, 0.1]
+            # s_floor_input[1][1] = [0.2, 0.1]
+            # s_floor_input[1][2] = [0.2, 0.1]
+            #
+            # s_floor_input[2][0] = [0.2]
+            # s_floor_input[2][1] = [0.2]
+            # s_floor_input[2][2] = [0.2, 0.1]
+
+            # max capacity a matter
+            storage_input = [[[] for j in range(3)] for i in range(3)]
+            storage_input[0][0] = [furnace_1["maxCapacity"]["iron"], furnace_1["maxCapacity"]["iron"]]
+            storage_input[0][1] = [furnace_1["maxCapacity"]["lime"], furnace_1["maxCapacity"]["lime"]]
+            storage_input[0][2] = [furnace_1["maxCapacity"]["dolomite"], furnace_1["maxCapacity"]["dolomite"]]
+
+            storage_input[1][0] = [furnace_2["maxCapacity"]["iron"], 8]
+            storage_input[1][1] = [furnace_2["maxCapacity"]["lime"], 8]
+            storage_input[1][2] = [furnace_2["maxCapacity"]["dolomite"], 8]
+
+            storage_input[2][0] = [furnace_3["maxCapacity"]["iron"]]
+            storage_input[2][1] = [furnace_3["maxCapacity"]["lime"]]
+            storage_input[2][2] = [furnace_3["maxCapacity"]["dolomite"], 6]
+
+            # storage_input[0][0] = [60, 60]
+            # storage_input[0][1] = [60, 60]
+            # storage_input[0][2] = [80, 80]
+            #
+            # storage_input[1][0] = [12, 8]
+            # storage_input[1][1] = [12, 8]
+            # storage_input[1][2] = [12, 8]
+            #
+            # storage_input[2][0] = [12]
+            # storage_input[2][1] = [12]
+            # storage_input[2][2] = [12, 6]
+
+            # نرخ شارژ
+            K_input = [furnace_setting[0].data["chargeRate"]["iron"], furnace_setting[0].data["chargeRate"]["lime"],
+                       furnace_setting[0].data["chargeRate"]["dolomite"]]
+            # K_input = [3.1, 2.3, 2.4]
+
+            # delay arrival
+            D_R_input = [[furnace_1["arrivalDelay"]["iron"], furnace_1["arrivalDelay"]["lime"],
+                          furnace_1["arrivalDelay"]["dolomite"]],
+                         [furnace_2["arrivalDelay"]["iron"], furnace_2["arrivalDelay"]["lime"],
+                          furnace_2["arrivalDelay"]["dolomite"]],
+                         [furnace_3["arrivalDelay"]["iron"], furnace_3["arrivalDelay"]["lime"],
+                          furnace_3["arrivalDelay"]["dolomite"]]]
+            # # delay empty
+            D_E_input = [[furnace_1["emptyingDelay"]["iron"], furnace_1["emptyingDelay"]["lime"],
+                          furnace_1["emptyingDelay"]["dolomite"]],
+                         [furnace_2["emptyingDelay"]["iron"], furnace_2["emptyingDelay"]["lime"],
+                          furnace_2["emptyingDelay"]["dolomite"]],
+                         [furnace_3["emptyingDelay"]["iron"], furnace_3["emptyingDelay"]["lime"],
+                          furnace_3["emptyingDelay"]["dolomite"]]]
+            # D_R_input = [[8, 7, 9],
+            #              [5, 5, 7],
+            #              [5, 5, 7]]
+            # D_E_input = [[2, 2, 2],
+            #              [2, 2, 2],
+            #              [2, 2, 2]]
+
+            # disables_raw_input = [(10, 9)]
+            disables_raw_input = [(10, 9), (4, 12)]
+            #
+            B_first_11_input = self.b_first_11_input()
+
+            charge_instantly_choice_input = False
+            CONS_input = self.cons_input()
+            return W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input, B_first_11_input, disables_raw_input, charge_instantly_choice_input
+        raise exceptions.ValidationError(_("parameter or furnace setting not found."))
+
+    def main(self):
+        W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input, B_first_11_input, disables_raw_input, charge_instantly_choice_input = self.create_input_main()
         self.opt_actions_output, self.opt_w_in_time, self.opt_B, self.opt_shooting_list, self.STATUS, self.no_action_spend_time, self.data = main_tread(
             W_input,
             s_floor_input,
@@ -253,7 +382,20 @@ class CallMain:
             raise exceptions.ValidationError(_("There is a problem, please check the values."))
 
         data = self.create_data_json()
+        self.save_data_main(data)
         return data
+
+    def save_data_main(self, data):
+        furnace = FurnaceSetting.objects.filter(is_active=True)
+        parameter = Parameter.objects.filter(is_active=True)
+        ParameterCalc.objects.all().update(is_active=False)
+        ParameterCalc.objects.create(
+            data=data,
+            furnace_setting=furnace[0],
+            parameter=parameter[0],
+            is_active=True
+        )
+        return True
 
     def action_output(self):
         if self.parameter_obj.exists():
@@ -263,8 +405,8 @@ class CallMain:
                 minute = datetime.timedelta(minutes=item_opt_actions_output[0])
                 duration = datetime.timedelta(minutes=item_opt_actions_output[1])
                 actions_output = {
-                    "start_time": self.parameter_obj[0].updated_at + minute,
-                    "end_time": self.parameter_obj[0].updated_at + minute + duration,
+                    "start_time": str(self.parameter_obj[0].updated_at + minute),
+                    "end_time": str(self.parameter_obj[0].updated_at + minute + duration),
                     "row": [item_opt_actions_output[2], item_opt_actions_output[3], item_opt_actions_output[4]]
                 }
                 lst_action_output.append(actions_output)
@@ -478,25 +620,46 @@ class CallMain:
 
         data = {
             "time": self.time_opt_in_time(),
-            "data": opt_in_time_materials
+            "data": dict(opt_in_time_materials)
         }
 
+        return data
+
+    def create_opt_B_data(self):
+        furnace = FurnaceSetting.objects.filter(is_active=True)[0]
+        lst_time = [str(furnace.created_at + datetime.timedelta(minutes=item_time_)) for item_time in self.opt_B.loc[:, ["time"]].values.tolist() for item_time_ in item_time]
+        header = self.opt_B.columns.values[1:]
+        lst_bins = []
+        for item in header:
+            bins = {
+                "bin" + item: [item__ for item_ in self.opt_B.loc[:, [item]].values.tolist() for item__ in item_]
+            }
+            lst_bins.append(bins)
+        data = {
+            "time": lst_time,
+            "bins": lst_bins
+        }
         return data
 
     def create_data_json(self):
         opt_actions_output = self.action_output()
         opt_w_in_time = self.create_data_opt_in_time()
+        opt_B = self.create_opt_B_data()
+        print(self.opt_shooting_list)
 
         data = {
             "opt_actions_output": opt_actions_output,
-            "opt_w_in_time": opt_w_in_time
+            "opt_w_in_time": opt_w_in_time,
+            "opt_B": opt_B,
+            "opt_shooting_list": self.opt_shooting_list
         }
-        return data
+        return dict(data)
 
     def time_opt_in_time(self):
+        parameter = Parameter.objects.filter(is_active=True)[0]
         lst_times = []
         times = self.opt_w_in_time.loc[:, ["time"]]
         for item_times in times.values.tolist():
             for item_time in item_times:
-                lst_times.append(item_time)
+                lst_times.append(str(parameter.created_at + datetime.timedelta(minutes=item_time)))
         return lst_times

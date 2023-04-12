@@ -7,8 +7,8 @@ import numpy as np
 
 import pandas as pd
 
-from django.conf import settings
 
+from django.conf import settings
 
 # ------ Functions
 
@@ -605,8 +605,34 @@ class Node:
 
 def read_cons():
     global MAX_TIME_DURATION, CONS
-    df = pd.read_excel(os.path.join(settings.BASE_DIR, "parameter/helper/CONS.xlsx"), sheet_name='consumption', header=None)
-    # df = pd.read_excel("CONS.xlsx", sheet_name='consumption', header=None)
+    # Test:
+    # time: 4670
+    # df = pd.read_excel('./Data/Test-Data/input--new.xlsx', sheet_name='consumption', header=None)
+    # # time: 1058
+    # df = pd.read_excel('./Data/Test-Data/input_0812101.xlsx', sheet_name='consumption', header=None)
+    # # time: 537
+    # df = pd.read_excel('./Data/Test-Data/consumption_201201.xlsx', sheet_name='cons_500min_bkt1', header=None)
+    # # time: 537
+    # df = pd.read_excel('./Data/Test-Data/consumption_201201.xlsx', sheet_name='cons_500min_bkt13', header=None)
+    # # time: 290
+    # df = pd.read_excel('./Data/Test-Data/consumption_201201.xlsx', sheet_name='cons_300min_bkt13', header=None)
+    # # time: 1450
+    df = pd.read_excel(os.path.join(settings.BASE_DIR, 'parameter/helper/CONS.xlsx'), sheet_name='consumption', header=None)
+    # # time: 1450
+    # df = pd.read_excel('./Data/Test-Data/consumption_12_23.xlsx', sheet_name='consumption2_12_to_23', header=None)
+    # # time: 900
+    # df = pd.read_excel('./Data/Test-Data/consumption_12_23.xlsx', sheet_name='consumption_300_60_300', header=None)
+
+    # df = pd.read_excel('./Data/inititalization.xlsx', header=None)
+    # df = pd.read_excel('./Data/input_191101.xlsx', sheet_name='consumption', header=None)
+    # df = pd.read_excel('./Data/input_191101-edit.xlsx', sheet_name='consumption', header=None)
+    # df = pd.read_excel('./Data/input_191101-e2.xlsx', sheet_name='consumption', header=None)
+    # df = pd.read_excel('./Data/input_0812101.xlsx', sheet_name='consumption', header=None)
+    # df = pd.read_excel('./Data/input--new.xlsx', sheet_name='consumption', header=None)
+    # df = pd.read_excel('./Data/input_0812101 - Copy.xlsx', sheet_name='consumption', header=None)
+    # df = pd.read_excel('./Data/input2_0912101.xlsx', sheet_name='consumption', header=None)
+    # df = pd.read_excel('./Data/input3_0912101.xlsx', sheet_name='consumption', header=None)
+
     for i in range(3):
         for j in range(3):
             CONS[i][j] = df[3 * i + j].tolist()
@@ -641,8 +667,8 @@ def save_actions_output():
 
     df_save_action_output = pd.DataFrame(action_output, columns=['start-time', 'duration', 'i', 'j', 'k'])
 
-    # file_name = f'{path}/log-actions-output.xlsx'
-    # df_save_action_output.to_excel(file_name)
+    file_name = f'{path}/log-actions-output.xlsx'
+    df_save_action_output.to_excel(file_name)
 
     return df_save_action_output
 
@@ -664,8 +690,8 @@ def save_w_in_time():
                                 columns=['time', '0,0,0', '0,0,1', '0,1,0', '0,1,1', '0,2,0', '0,2,1', '1,0,0', '1,0,1',
                                          '1,1,0', '1,1,1', '1,2,0', '1,2,1', '2,0,0', '2,1,0', '2,2,0', '2,2,1'])
 
-    # file_name = f'{path}/log-weight.xlsx'
-    # df_w_in_time.to_excel(file_name)
+    file_name = f'{path}/log-weight.xlsx'
+    df_w_in_time.to_excel(file_name)
 
     return df_w_in_time
 
@@ -689,8 +715,8 @@ def save_B():
                         columns=['time', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                                  '10', '11', '12'])
 
-    # file_name = f'{path}/log-B.xlsx'
-    # df_B.to_excel(file_name)
+    file_name = f'{path}/log-B.xlsx'
+    df_B.to_excel(file_name)
 
     return df_B
 
@@ -918,7 +944,7 @@ def zero_point():
 #
 # path = './Data/Test-Data/Result/consumption_12_23-consumption2_12_to_23'
 # path = './Data/Test-Data/Result/consumption_12_23-consumption_300_60_300'
-path = './Data/Test-Data/Result/consumption_12_23-consumption_12_to_23'
+path = os.path.join(settings.BASE_DIR, 'parameter/helper/consumption_12_23-consumption_12_to_23')
 
 node_counter = 0
 
@@ -1031,10 +1057,106 @@ def fill_11_first_W_in_time():
         W_in_time[i] = copy.deepcopy(W)
 
 
+def reset_info():
+    global node_counter, MAX_TIME_DURATION, CONS, B, K, D_R, D_E, T_MIN_Charge, MAX_CHARGE_TIME_DRI, MAX_CHARGE_TIME_LIM_DOL, actions, storage, s_floor, W
+    global disables, disables_raw, ch_psb_delay, ch_psb_charge_time, W_in_time, starting_action, starting_time, last_time_b_before, charge_instantly_choice
+    global past_action, name_counter, depth_counter, MAX_TIME_SEARCH_NODE, Time_Prediction, action_output, action_history, max_time_go_forward, max_time_B
+    global max_time_W_in_time, max_time_action_output, end_out_w, start_time_helper, base_level_check, level_check, STATUS, MAX_TIME_EXIT, cons_integral, B_first_11
+    global node, opt_B, opt_shooting_list, opt_w_in_time, opt_actions_output, no_action_spend_time
+
+    node_counter = 0
+
+    MAX_TIME_DURATION = 1500
+
+    CONS = np.empty([3, 3], dtype=object)
+
+    B = None
+
+    K = None
+
+    D_R = None
+    D_E = None
+
+    # DRI -> 5 , DRI & Lim -> 2
+    T_MIN_Charge = [4, 1, 1]
+
+    MAX_CHARGE_TIME_DRI = 25
+    MAX_CHARGE_TIME_LIM_DOL = 7
+
+    actions = []
+
+    storage = [[[] for j in range(3)] for i in range(3)]
+
+    s_floor = [[[] for j in range(3)] for i in range(3)]
+
+    W = [[[] for j in range(3)] for i in range(3)]
+
+    disables_raw = []
+    disables = []
+
+    ch_psb_charge_time = [8, 4, 4]
+    ch_psb_delay = [11, 9, 9]
+
+    W_in_time = None
+
+    starting_action = None
+    starting_time = 11
+    last_time_b_before = 0
+
+    charge_instantly_choice = True
+
+    past_action = None
+
+    name_counter = 0
+    depth_counter = 0
+
+    MAX_TIME_SEARCH_NODE = 1000
+    Time_Prediction = 300
+
+    action_history = []
+    action_output = []
+
+    max_time_go_forward = -1
+    max_time_B = None
+    max_time_W_in_time = None
+    max_time_action_output = None
+
+    end_out_w = None
+
+    start_time = time.time()
+    start_time_helper = start_time
+
+    base_level_check = 2
+    level_check = 2
+
+    STATUS = 400
+
+    MAX_TIME_EXIT = 10
+
+    cons_integral = None
+
+    B_first_11 = None
+
+    disables_raw = None
+
+    charge_instantly_choice = None
+
+    node = None
+
+    # output variables
+    opt_actions_output = None
+    opt_w_in_time = None
+    opt_B = None
+    opt_shooting_list = None
+    no_action_spend_time = []
+
+
 def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input, B_first_11_input,
                disables_raw_input, charge_instantly_choice_input=False):
     global cons_integral, charge_instantly_choice, B, node, max_time_go_forward, W_in_time, action_output, start_time_helper, level_check, max_time_B, max_time_W_in_time, max_time_action_output, STATUS
     global W, s_floor, storage, K, D_R, D_E, CONS, B_first_11, disables_raw
+
+    reset_info()
 
     probable_risk_bin = None
 
@@ -1115,7 +1237,7 @@ def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_in
 
     if STATUS == 400:
         STATUS = 500
-        print('Spend Time: ', time.time() - start_time)
+        # print('Spend Time: ', time.time() - start_time)
 
         B = max_time_B
         if len(max_time_W_in_time[0][0][0]) == 2:
@@ -1126,7 +1248,7 @@ def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_in
     end_time = time.time()
 
     print('Max Time Reach: ', max_time_go_forward)
-    print('Duration: ', end_time - start_time)
+    # print('Duration: ', end_time - start_time)
     print('Status: ', STATUS)
 
     return opt_actions_output, opt_w_in_time, opt_B, opt_shooting_list, STATUS, no_action_spend_time, [
@@ -1146,11 +1268,11 @@ if __name__ == '__main__':
 
     W_input[1][0] = [5.32, 2]
     W_input[1][1] = [5.88, 2]
-    W_input[1][2] = [5.8, 3]
+    W_input[1][2] = [5.8, 2]
 
     W_input[2][0] = [5.68]
     W_input[2][1] = [5.6]
-    W_input[2][2] = [7.68, 4]
+    W_input[2][2] = [7.68, 2]
 
     s_floor_input = [[[] for j in range(3)] for i in range(3)]
     s_floor_input[0][0] = [2, 2]
@@ -1195,9 +1317,9 @@ if __name__ == '__main__':
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
@@ -1205,5 +1327,6 @@ if __name__ == '__main__':
 
     CONS_input = read_cons()
 
-    outputs = main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input,
-                         B_first_11_input, disables_raw_input, charge_instantly_choice_input)
+    while True:
+        outputs = main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input,
+                             B_first_11_input, disables_raw_input, charge_instantly_choice_input)

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pickle
 import requests
+
 from django.conf import settings
 
 
@@ -32,19 +33,33 @@ def gregorian_to_jalali(gy, gm, gd):
     return [jy, jm, jd]
 
 
+v1 = None
+v2 = None
+v3 = None
+
+
 def create_consumption(f1D, f1Ds, f2D, f2Ds, f3D, f3Ds, f1l, f2l, f3l, f1d, f2d, f3d):
     # def create_consumption( ):
 
     # current_time = datetime.now()
-    current_time = datetime.strptime("2023/02/28 09:50:11", "%Y/%m/%d %H:%M:%S")
-
+    global v1, v2, v3
+    current_time = datetime.strptime("2023/04/04 08:00:11", "%Y/%m/%d %H:%M:%S")
     current_time_str = current_time.strftime("%Y/%m/%d %H:%M:%S")
+
     jalali_time_c = gregorian_to_jalali(int(current_time_str[0:4]), int(current_time_str[5:7]),
                                         int(current_time_str[8:10]))
-    fromdate = str(jalali_time_c[0]) + "/" + str(jalali_time_c[1]) + "/" + str(
-        jalali_time_c[2]) + " " + current_time_str[11:19]
+    month = str(jalali_time_c[1])
+    day = str(jalali_time_c[2])
+    if len(str(jalali_time_c[1])) == 1:
+        month = "0" + str(jalali_time_c[1])
 
-    forecast_hours = 20
+    if len(str(jalali_time_c[2])) == 1:
+        day = "0" + str(jalali_time_c[2])
+
+    fromdate = str(jalali_time_c[0]) + "/" + month + "/" + day + " " + current_time_str[11:19]
+    current_time_jalali = datetime.strptime(fromdate, "%Y/%m/%d %H:%M:%S")
+
+    forecast_hours = 24
     total_time = forecast_hours * 60
     start = 12
 
@@ -55,9 +70,7 @@ def create_consumption(f1D, f1Ds, f2D, f2Ds, f3D, f3Ds, f1l, f2l, f3l, f1d, f2d,
     toDate = str(jalali_time_l[0]) + "/" + str(jalali_time_l[1]) + "/" + str(jalali_time_l[2]) + " " + last_time_str[
                                                                                                        11:19]
 
-    myobj = {}
-    myobj['fromDate'] = fromdate
-    myobj['toDate'] = toDate
+    myobj = {'fromDate': fromdate, 'toDate': toDate}
 
     ################## API Link ########################
     # url_ProductionPlan = "http://ias22:8735/MeltShopHttpServiceLibrary/GetProductionPlan"
@@ -68,7 +81,7 @@ def create_consumption(f1D, f1Ds, f2D, f2Ds, f3D, f3Ds, f1l, f2l, f3l, f1d, f2d,
 
     ##################### File #############################
 
-    f2 = open(os.path.join(settings.BASE_DIR, 'parameter/helper/1505.json'))
+    f2 = open(os.path.join(settings.BASE_DIR, 'parameter/helper/GetProductionPlan.json'))
     dataProductionPlan = json.load(f2)
     temp = []
 
@@ -82,8 +95,8 @@ def create_consumption(f1D, f1Ds, f2D, f2Ds, f3D, f3Ds, f1l, f2l, f3l, f1d, f2d,
             if ((dataProductionPlan[i]['ProcessStartDate'] == dtnullvalue_str
                  or dataProductionPlan[i]['ProcessStopDate'] == dtnullvalue_str or dataProductionPlan[i][
                      'ProcessStop'] == 0)
-                    and current_time_str < dataProductionPlan[i]['ProcessSchedStopDate'] and dataProductionPlan[i][
-                        'ProcessSchedStartDate'] < last_time_str):
+                    and fromdate < dataProductionPlan[i]['ProcessSchedStopDate'] and dataProductionPlan[i][
+                        'ProcessSchedStartDate'] < toDate):
 
                 tstart = datetime.strptime(dataProductionPlan[i]['ProcessStartDate'], "%Y/%m/%d %H:%M:%S")
                 tend = datetime.strptime(dataProductionPlan[i]['ProcessStopDate'], "%Y/%m/%d %H:%M:%S")
@@ -96,72 +109,80 @@ def create_consumption(f1D, f1Ds, f2D, f2Ds, f3D, f3Ds, f1l, f2l, f3l, f1d, f2d,
 
                 temp = np.append(temp, [(tpend - tpstart) // 60, dataProductionPlan[i]['StationCode']])
 
-                if tstart < current_time and tend == dtnullvalue and current_time < tpend:
+                if tstart < current_time_jalali and tend == dtnullvalue and current_time_jalali < tpend:
 
                     if tstart != dtnullvalue:
-                        diffstart = current_time - tstart
-                        remtime = tpend - current_time
+                        diffstart = current_time_jalali - tstart
+                        remtime = tpend - current_time_jalali
                         # pp = np.append(pp,[(tend - tstart).seconds/60,remtime.seconds/60,furnaceid])
-                        pp = np.append(pp, [remtime.seconds / 60, furnaceid])
+                        pp = np.append(pp, [remtime.seconds / 60, furnaceid, dataProductionPlan[i]['BucketPlaned']])
                     else:
 
-                        pp = np.append(pp, [(tpend - tpstart).seconds / 60, furnaceid])
+                        pp = np.append(pp, [(tpend - tpstart).seconds / 60, furnaceid,
+                                            dataProductionPlan[i]['BucketPlaned']])
 
-                elif current_time < tpstart and tstart == dtnullvalue and tend == dtnullvalue:
-                    pp = np.append(pp, [(tpend - tpstart).seconds / 60, furnaceid])
+                elif current_time_jalali < tpstart and tstart == dtnullvalue and tend == dtnullvalue:
+                    pp = np.append(pp,
+                                   [(tpend - tpstart).seconds / 60, furnaceid, dataProductionPlan[i]['BucketPlaned']])
 
     consumption = np.zeros([total_time, 9])
 
     production_program1 = []
     production_program2 = []
     production_program3 = []
-    for i in range(0, len(pp) - 1, 2):
+    sabad1 = []
+    sabad2 = []
+    sabad3 = []
+    for i in range(0, len(pp) - 1, 3):
         period = pp[i]
         fid = pp[i + 1]
 
         if fid == 1:
+            sabad1 = np.append(sabad1, pp[i + 2])
             production_program1 = np.append(production_program1, pp[i])
             production_program1 = production_program1.astype(int)
 
         elif fid == 2:
+            sabad2 = np.append(sabad2, pp[i + 2])
             production_program2 = np.append(production_program2, pp[i])
             production_program2 = production_program2.astype(int)
 
         elif fid == 3:
+            sabad3 = np.append(sabad3, pp[i + 2])
             production_program3 = np.append(production_program3, pp[i])
             production_program3 = production_program3.astype(int)
 
     ####################################
-    j = start;
-    cnt = 0;
+    j = start
+    cnt = 0
 
-    sabad1 = np.zeros(len(production_program1))
-    # for i in range(0,len(production_program1),2):
-    #    sabad1[i] = 1
+    # sabad1=np.zeros(len(production_program1))
+    # #for i in range(0,len(production_program1),2):
+    # #    sabad1[i] = 1
 
-    sabad2 = np.zeros(len(production_program2))
-    # for i in range(0,len(production_program2),2):
-    #    sabad2[i] = 1
+    # sabad2=np.zeros(len(production_program2))
+    # #for i in range(0,len(production_program2),2):
+    # #    sabad2[i] = 1
 
-    sabad3 = np.zeros(len(production_program3))
-    # for i in range(0,len(production_program3),2):
-    #    sabad3[i] = 1
+    # sabad3=np.zeros(len(production_program3))
+    # #for i in range(0,len(production_program3),2):
+    # #    sabad3[i] = 1
 
     s_cnt = 0
     for p in production_program1:
 
-        if (sabad1[s_cnt] == 1):
-            F1D = f1Ds / 2
+        if sabad1[s_cnt] == 1:
+            F1D = np.array(f1Ds) / 2
         else:
-            F1D = f1D / 2
+            F1D = np.array(f1D) / 2
 
-        if (p > len(F1D)):
+        if p > len(F1D):
             diff = int(p - len(F1D))
             v1 = np.concatenate((F1D, np.zeros((1, diff)).flatten()))
             v2 = np.concatenate((f1l, np.zeros((1, diff)).flatten()))
             v3 = np.concatenate((f1d, np.zeros((1, diff)).flatten()))
 
-        elif (p < len(F1D)):
+        elif p < len(F1D):
             v1 = F1D[1:p + 1]
             v2 = f1l[1:p + 1]
             v3 = f1d[1:p + 1]
@@ -183,17 +204,17 @@ def create_consumption(f1D, f1Ds, f2D, f2Ds, f3D, f3Ds, f1l, f2l, f3l, f1d, f2d,
     s_cnt = 0
     for p in production_program2:
         if sabad2[s_cnt] == 1:
-            F2D = f2Ds / 2
+            F2D = np.array(f2Ds) / 2
         else:
-            F2D = f2D / 2
+            F2D = np.array(f2D) / 2
 
-        if (p > len(F2D)):
+        if p > len(F2D):
             diff = int(p - len(F2D))
             v1 = np.concatenate((F2D, np.zeros((1, diff)).flatten()))
             v2 = np.concatenate((f2l, np.zeros((1, diff)).flatten()))
             v3 = np.concatenate((f2d, np.zeros((1, diff)).flatten()))
 
-        elif (p < len(F2D)):
+        elif p < len(F2D):
             v1 = F2D[1:p + 1]
             v2 = f2l[1:p + 1]
             v3 = f2d[1:p + 1]
@@ -211,24 +232,26 @@ def create_consumption(f1D, f1Ds, f2D, f2Ds, f3D, f3Ds, f1l, f2l, f3l, f1d, f2d,
     s_cnt = 0
     for p in production_program3:
         if sabad3[s_cnt] == 1:
-            F3D = f3Ds
+            F3D = np.array(f3Ds)
         else:
-            F3D = f3D
+            F3D = np.array(f3D)
 
-        if (p > len(F3D)):
+        if p > len(F3D):
             diff = int(p - len(F3D))
-            v1 = np.concatenate((F3D, np.zeros((1, diff)).flatten()))
-            v2 = np.concatenate((f3l, np.zeros((1, diff)).flatten()))
-            v3 = np.concatenate((f3d, np.zeros((1, diff)).flatten()))
+            v1 = np.concatenate((np.array(F3D), np.zeros((1, diff)).flatten()))
+            v2 = np.concatenate((np.array(f3l), np.zeros((1, diff)).flatten()))
+            v3 = np.concatenate((np.array(f3d), np.zeros((1, diff)).flatten()))
 
-        elif (p < len(F3D)):
-            v1 = F3D[1:p + 1]
-            v2 = f3l[1:p + 1]
-            v3 = f3d[1:p + 1]
+        elif p < len(F3D):
+            v1 = np.array(F3D)[1:p + 1]
+            v2 = np.array(f3l)[1:p + 1]
+            v3 = np.array(f3d)[1:p + 1]
+
         elif p == len(F3D):
-            v1 = F3D
-            v2 = f3l
-            v3 = f3d
+            v1 = np.array(F3D)
+            v2 = np.array(f3l)
+            v3 = np.array(f3d)
+
 
         consumption[j: j + p, 2] = v1
         consumption[j: j + p, 5] = v2
