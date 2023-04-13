@@ -397,6 +397,31 @@ class CallMain:
         )
         return True
 
+    def data_convert(self):
+        data = [
+            {"row": "0, 0, 0", "convert": "آهن کوره ۱"},
+            {"row": "0, 0, 1", "convert": "آهن کوره ۱ بین ۱"},
+            {"row": "0, 1, 0", "convert": "آهن کوره ۲"},
+            {"row": "0, 1, 1", "convert": "آهن کوره ۲ بین ۱"},
+            {"row": "0, 2, 0", "convert": "اهن کوره ۳"},
+            {"row": "0, 2, 1", "convert": "آهن کوره ۳ بین ۱"},
+            {"row": "1, 0, 0", "convert": "آهک کوره ۱"},
+            {"row": "1, 1, 0", "convert": "آهک کوره ۲"},
+            {"row": "1, 2, 0", "convert": "آهک کوره ۳"},
+            {"row": "2, 0, 0", "convert": "دولومیت کوره ۱"},
+            {"row": "2, 1, 0", "convert": "دولومیت کوره ۲"},
+            {"row": "2, 2, 0", "convert": "دولومیت کوره ۳"},
+        ]
+        return data
+
+    def convert_row_action_putput(self, material, furnace, pin):
+        row = f"{material}, {furnace}, {pin}"
+        for item in self.data_convert():
+            if item["row"] == row:
+                return item["convert"]
+        else:
+            return ""
+
     def action_output(self):
         if self.parameter_obj.exists():
             lst_action_output = []
@@ -407,7 +432,8 @@ class CallMain:
                 actions_output = {
                     "start_time": str(self.parameter_obj[0].updated_at + minute),
                     "end_time": str(self.parameter_obj[0].updated_at + minute + duration),
-                    "row": [item_opt_actions_output[2], item_opt_actions_output[3], item_opt_actions_output[4]]
+                    "furnace": self.convert_row_action_putput(item_opt_actions_output[2], item_opt_actions_output[3],
+                                                              item_opt_actions_output[4])
                 }
                 lst_action_output.append(actions_output)
             return lst_action_output
@@ -627,7 +653,8 @@ class CallMain:
 
     def create_opt_B_data(self):
         furnace = FurnaceSetting.objects.filter(is_active=True)[0]
-        lst_time = [str(furnace.created_at + datetime.timedelta(minutes=item_time_)) for item_time in self.opt_B.loc[:, ["time"]].values.tolist() for item_time_ in item_time]
+        lst_time = [str(furnace.created_at + datetime.timedelta(minutes=item_time_)) for item_time in
+                    self.opt_B.loc[:, ["time"]].values.tolist() for item_time_ in item_time]
         header = self.opt_B.columns.values[1:]
         lst_bins = []
         for item in header:
@@ -641,17 +668,48 @@ class CallMain:
         }
         return data
 
+    def convert_opt_opt_shooting_list_1(self, furnace):
+        row = f"{furnace[0]}, {furnace[1]}, {furnace[2]}"
+        for item in self.data_convert():
+            if item["row"] == row:
+                return item["convert"]
+        else:
+            return ""
+
+    def convert_opt_opt_shooting_list_2(self, furnace):
+        row = f"{furnace[0]}, {furnace[1]}, {furnace[2]}"
+        for item in self.data_convert():
+            if item["row"] == row:
+                return item["convert"]
+        else:
+            return ""
+
+    def create_data_opt_shooting_list(self):
+        lst = []
+        furnace = FurnaceSetting.objects.filter(is_active=True)[0]
+        for item_shooting_list in self.opt_shooting_list:
+            time = furnace.created_at + datetime.timedelta(minutes=item_shooting_list[0])
+            data = {
+                "start_time": str(time),
+                "duration": item_shooting_list[1],
+                "data": [{"notification_time": str(time + datetime.timedelta(minutes=item[0])),
+                          "furnace_1": self.convert_opt_opt_shooting_list_1(item[1]),
+                          "furnace_2": self.convert_opt_opt_shooting_list_2(item[2])
+                          } for item in item_shooting_list[2]]
+            }
+            lst.append(data)
+
+        return lst
+
     def create_data_json(self):
         opt_actions_output = self.action_output()
         opt_w_in_time = self.create_data_opt_in_time()
-        opt_B = self.create_opt_B_data()
-        print(self.opt_shooting_list)
+        opt_shooting_list = self.create_data_opt_shooting_list()
 
         data = {
             "opt_actions_output": opt_actions_output,
             "opt_w_in_time": opt_w_in_time,
-            "opt_B": opt_B,
-            "opt_shooting_list": self.opt_shooting_list
+            "opt_shooting_list": opt_shooting_list
         }
         return dict(data)
 
