@@ -17,7 +17,8 @@ from parameter.api.serializers import (
     FurnaceSettingListSerializer,
     ParameterDetailSerializer,
     ParameterListSerializer,
-    ParameterUploadSerializer
+    ParameterUploadSerializer,
+    ParameterCallMainSerializer
 )
 from parameter.models import FurnaceSetting, Parameter, ParameterCalc
 from parameter.helper.utils import test_request_factory_api, read_excel_analyze
@@ -68,7 +69,7 @@ class ParameterListCreateAPIView(generics.ListCreateAPIView):
 class ParameterRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Parameter.objects.all()
     serializer_class = ParameterSerializer
-    # permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
     lookup_field = "id"
 
     def get_serializer_class(self):
@@ -80,11 +81,19 @@ class ParameterRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
 class ParameterCalculationAPIView(generics.ListAPIView):
     queryset = ParameterCalc.objects.all()
     serializer_class = ParameterCalculationSerializer
-
-    # permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return ParameterCalc.objects.filter(is_active=True)
+
+
+class ParameterCallMain(generics.ListAPIView):
+    serializer_class = ParameterCallMainSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.serializer_class(request.data)
+        return Response(serializer.data)
 
 
 class ParameterApiFactoryAPIView(generics.ListAPIView):
@@ -100,7 +109,7 @@ class ParameterUploadFileAPIView(generics.UpdateAPIView):
     queryset = FurnaceSetting.objects.all()
     serializer_class = ParameterUploadSerializer
     parser_classes = [MultiPartParser, FormParser]
-    # permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
 
     def get_object(self):
         return get_object_or_404(FurnaceSetting, id=self.kwargs.get("id"))
@@ -121,4 +130,3 @@ class ParameterUploadFileAPIView(generics.UpdateAPIView):
             "updates_at": instance.updated_at
         }
         return Response(data, status=200)
-

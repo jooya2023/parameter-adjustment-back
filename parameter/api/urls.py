@@ -12,7 +12,8 @@ urlpatterns = [
     path('parameter/', views.ParameterListCreateAPIView.as_view(), name="list_create_parameter"),
     path('parameter/<int:id>/', views.ParameterRetrieveUpdateDestroyAPIView.as_view(), name="detail_update_delete_parameter"),
 
-    path('parameter/calc/', views.ParameterCalculationAPIView.as_view(), name="calc_paramater"),
+    path('parameter/calc-data/', views.ParameterCalculationAPIView.as_view(), name="calc_parameter_data"),
+    path('parameter/calc/', views.ParameterCallMain.as_view(), name="calc_parameter"),
     path('parameter-factory-api/', views.ParameterApiFactoryAPIView.as_view(), name="parameter_factory_api"),
 
 ]

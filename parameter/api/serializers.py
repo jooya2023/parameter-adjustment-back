@@ -35,8 +35,11 @@ class FurnaceSettingSerializer(serializers.ModelSerializer):
             instance.name = validated_data.get("name", instance.name)
             instance.data = validated_data.get("data", instance.data)
         instance.save()
-        obj_call_main = CallMain()
-        obj_call_main.main()
+        try:
+            obj_call_main = CallMain()
+            obj_call_main.main()
+        except Exception:
+            raise serializers.ValidationError(_("Please check the entries, there may be a problem with the entries"))
         return instance
 
 
@@ -76,8 +79,11 @@ class ParameterSerializer(serializers.ModelSerializer):
                   "parameter as the default.")
             )
         instance.save()
-        obj_call_main = CallMain()
-        obj_call_main.main()
+        try:
+            obj_call_main = CallMain()
+            obj_call_main.main()
+        except Exception:
+            raise serializers.ValidationError(_("Please check the entries, there may be a problem with the entries"))
         return instance
 
 
@@ -108,4 +114,19 @@ class ParameterUploadSerializer(serializers.Serializer):
 
     class Meta:
         fields = ["file"]
+
+
+class ParameterCallMainSerializer(serializers.Serializer):
+    data = serializers.JSONField()
+
+    class Meta:
+        fields = ["data"]
+
+    def to_representation(self, instance):
+        try:
+            obj_call_main = CallMain()
+            data = obj_call_main.main()
+            return data
+        except Exception:
+            raise serializers.ValidationError(_("Please check the entries, there may be a problem with the entries"))
 
