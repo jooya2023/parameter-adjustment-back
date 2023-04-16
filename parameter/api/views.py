@@ -69,7 +69,7 @@ class ParameterListCreateAPIView(generics.ListCreateAPIView):
 class ParameterRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Parameter.objects.all()
     serializer_class = ParameterSerializer
-    # permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
     lookup_field = "id"
 
     def get_serializer_class(self):

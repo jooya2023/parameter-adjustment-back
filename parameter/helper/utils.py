@@ -449,7 +449,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_iron_furnace1_bin1.append(0.0)
                 else:
-                    lst_iron_furnace1_bin1.append(item)
+                    lst_iron_furnace1_bin1.append(round(item, 2))
 
         iron_furnace1_bin2 = self.opt_w_in_time.loc[:, ["0,0,1"]]
         lst_iron_furnace1_bin2 = []
@@ -458,7 +458,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_iron_furnace1_bin2.append(0.0)
                 else:
-                    lst_iron_furnace1_bin2.append(item)
+                    lst_iron_furnace1_bin2.append(round(item, 2))
 
         iron_furnace2_bin1 = self.opt_w_in_time.loc[:, ["0,1,0"]]
         lst_iron_furnace2_bin1 = []
@@ -467,7 +467,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_iron_furnace2_bin1.append(0.0)
                 else:
-                    lst_iron_furnace2_bin1.append(item)
+                    lst_iron_furnace2_bin1.append(round(item, 2))
 
         iron_furnace2_bin2 = self.opt_w_in_time.loc[:, ["0,1,1"]]
         lst_iron_furnace2_bin2 = []
@@ -476,7 +476,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_iron_furnace2_bin2.append(0.0)
                 else:
-                    lst_iron_furnace2_bin2.append(item)
+                    lst_iron_furnace2_bin2.append(round(item, 2))
 
         iron_furnace3_bin1 = self.opt_w_in_time.loc[:, ["0,2,0"]]
         lst_iron_furnace3_bin1 = []
@@ -485,7 +485,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_iron_furnace3_bin1.append(0.0)
                 else:
-                    lst_iron_furnace3_bin1.append(item)
+                    lst_iron_furnace3_bin1.append(round(item, 2))
 
         iron_furnace3_bin2 = self.opt_w_in_time.loc[:, ["0,2,1"]]
         lst_iron_furnace3_bin2 = []
@@ -494,7 +494,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_iron_furnace3_bin2.append(0.0)
                 else:
-                    lst_iron_furnace3_bin2.append(item)
+                    lst_iron_furnace3_bin2.append(round(item, 2))
 
         return lst_iron_furnace1_bin1, lst_iron_furnace1_bin2, lst_iron_furnace2_bin1, lst_iron_furnace2_bin2, lst_iron_furnace3_bin1, lst_iron_furnace3_bin2
 
