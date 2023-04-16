@@ -360,6 +360,7 @@ class CallMain:
 
             charge_instantly_choice_input = False
             CONS_input = self.cons_input()
+            print(CONS_input)
             return W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input, B_first_11_input, disables_raw_input, charge_instantly_choice_input
         raise exceptions.ValidationError(_("parameter or furnace setting not found."))
 
@@ -428,10 +429,11 @@ class CallMain:
 
             for item_opt_actions_output in self.opt_actions_output.values.tolist():
                 minute = datetime.timedelta(minutes=item_opt_actions_output[0])
+                timezone = datetime.timedelta(hours=3, minutes=30)
                 duration = datetime.timedelta(minutes=item_opt_actions_output[1])
                 actions_output = {
-                    "start_time": str(datetime.datetime.now() + minute),
-                    "end_time": str(datetime.datetime.now() + minute + duration),
+                    "start_time": str(datetime.datetime.now() + minute + timezone),
+                    "end_time": str(datetime.datetime.now() + minute + duration + timezone),
                     "furnace": self.convert_row_action_putput(item_opt_actions_output[2], item_opt_actions_output[3],
                                                               item_opt_actions_output[4])
                 }
@@ -687,8 +689,9 @@ class CallMain:
     def create_data_opt_shooting_list(self):
         lst = []
         furnace = FurnaceSetting.objects.filter(is_active=True)[0]
+        timezone = datetime.timedelta(hours=3, minutes=30)
         for item_shooting_list in self.opt_shooting_list:
-            time = datetime.datetime.now() + datetime.timedelta(minutes=item_shooting_list[0])
+            time = datetime.datetime.now() + datetime.timedelta(minutes=item_shooting_list[0]) + timezone
             data = {
                 "start_time": str(time),
                 "duration": item_shooting_list[1],
