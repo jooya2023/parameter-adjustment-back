@@ -89,7 +89,7 @@ class ParameterCalculationAPIView(generics.ListAPIView):
 
 class ParameterCallMain(generics.CreateAPIView):
     serializer_class = None
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         try:
