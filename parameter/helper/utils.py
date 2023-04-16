@@ -430,8 +430,8 @@ class CallMain:
                 minute = datetime.timedelta(minutes=item_opt_actions_output[0])
                 duration = datetime.timedelta(minutes=item_opt_actions_output[1])
                 actions_output = {
-                    "start_time": str(self.parameter_obj[0].updated_at + minute),
-                    "end_time": str(self.parameter_obj[0].updated_at + minute + duration),
+                    "start_time": str(datetime.datetime.now() + minute),
+                    "end_time": str(datetime.datetime.now() + minute + duration),
                     "furnace": self.convert_row_action_putput(item_opt_actions_output[2], item_opt_actions_output[3],
                                                               item_opt_actions_output[4])
                 }
@@ -507,7 +507,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_lime_furnace1_bin1.append(0.0)
                 else:
-                    lst_lime_furnace1_bin1.append(item)
+                    lst_lime_furnace1_bin1.append(round(item, 2))
 
         lime_furnace1_bin2 = self.opt_w_in_time.loc[:, ["1,0,1"]]
         lst_lime_furnace1_bin2 = []
@@ -516,7 +516,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_lime_furnace1_bin2.append(0.0)
                 else:
-                    lst_lime_furnace1_bin2.append(item)
+                    lst_lime_furnace1_bin2.append(round(item, 2))
 
         lime_furnace2_bin1 = self.opt_w_in_time.loc[:, ["1,1,0"]]
         lst_lime_furnace2_bin1 = []
@@ -525,7 +525,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_lime_furnace2_bin1.append(0.0)
                 else:
-                    lst_lime_furnace2_bin1.append(item)
+                    lst_lime_furnace2_bin1.append(round(item, 2))
         lime_furnace2_bin2 = self.opt_w_in_time.loc[:, ["1,1,1"]]
         lst_lime_furnace2_bin2 = []
         for item_lime_furnace2_bin2 in lime_furnace2_bin2.values.tolist():
@@ -533,7 +533,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_lime_furnace2_bin2.append(0.0)
                 else:
-                    lst_lime_furnace2_bin2.append(item)
+                    lst_lime_furnace2_bin2.append(round(item, 2))
         lime_furnace3_bin1 = self.opt_w_in_time.loc[:, ["1,2,0"]]
         lst_lime_furnace3_bin1 = []
         for item_lime_furnace3_bin1 in lime_furnace3_bin1.values.tolist():
@@ -541,7 +541,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_lime_furnace3_bin1.append(0.0)
                 else:
-                    lst_lime_furnace3_bin1.append(item)
+                    lst_lime_furnace3_bin1.append(round(item, 2))
         return lst_lime_furnace1_bin1, lst_lime_furnace1_bin2, lst_lime_furnace2_bin1, lst_lime_furnace2_bin2, lst_lime_furnace3_bin1
 
     def opt_in_time_dolomite(self):
@@ -553,7 +553,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_dolomite_furnace1_bin1.append(0.0)
                 else:
-                    lst_dolomite_furnace1_bin1.append(item)
+                    lst_dolomite_furnace1_bin1.append(round(item, 2))
 
         dolomite_furnace1_bin2 = self.opt_w_in_time.loc[:, ["2,1,0"]]
         lst_dolomite_furnace2_bin1 = []
@@ -562,7 +562,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_dolomite_furnace2_bin1.append(0.0)
                 else:
-                    lst_dolomite_furnace2_bin1.append(item)
+                    lst_dolomite_furnace2_bin1.append(round(item, 2))
 
         dolomite_furnace3_bin1 = self.opt_w_in_time.loc[:, ["2,2,0"]]
         lst_dolomite_furnace3_bin1 = []
@@ -571,7 +571,7 @@ class CallMain:
                 if str(item) == "nan":
                     lst_dolomite_furnace3_bin1.append(0.0)
                 else:
-                    lst_dolomite_furnace3_bin1.append(item)
+                    lst_dolomite_furnace3_bin1.append(round(item, 2))
 
         return lst_dolomite_furnace1_bin1, lst_dolomite_furnace2_bin1, lst_dolomite_furnace3_bin1
 
@@ -688,7 +688,7 @@ class CallMain:
         lst = []
         furnace = FurnaceSetting.objects.filter(is_active=True)[0]
         for item_shooting_list in self.opt_shooting_list:
-            time = furnace.created_at + datetime.timedelta(minutes=item_shooting_list[0])
+            time = datetime.datetime.now() + datetime.timedelta(minutes=item_shooting_list[0])
             data = {
                 "start_time": str(time),
                 "duration": item_shooting_list[1],
