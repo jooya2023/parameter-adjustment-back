@@ -21,7 +21,7 @@ from parameter.api.serializers import (
     ParameterCallMainSerializer
 )
 from parameter.models import FurnaceSetting, Parameter, ParameterCalc
-from parameter.helper.utils import test_request_factory_api, read_excel_analyze
+from parameter.helper.utils import test_request_factory_api, read_excel_analyze, CallMain
 
 from core.helper.global_permissions import CustomDjangoModelPermissions
 
@@ -69,7 +69,7 @@ class ParameterListCreateAPIView(generics.ListCreateAPIView):
 class ParameterRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Parameter.objects.all()
     serializer_class = ParameterSerializer
-    permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
+    # permission_classes = [CustomDjangoModelPermissions, IsAuthenticated]
     lookup_field = "id"
 
     def get_serializer_class(self):
@@ -87,13 +87,17 @@ class ParameterCalculationAPIView(generics.ListAPIView):
         return ParameterCalc.objects.filter(is_active=True)
 
 
-class ParameterCallMain(generics.ListAPIView):
-    serializer_class = ParameterCallMainSerializer
+class ParameterCallMain(generics.CreateAPIView):
+    serializer_class = None
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        serializer = self.serializer_class(request.data)
-        return Response(serializer.data)
+    def post(self, request, *args, **kwargs):
+        try:
+            obj_call_main = CallMain()
+            obj_call_main.main()
+        except Exception as e:
+            exceptions.APIException(e)
+        return Response({}, status=200)
 
 
 class ParameterApiFactoryAPIView(generics.ListAPIView):
