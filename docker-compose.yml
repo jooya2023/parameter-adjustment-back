@@ -46,7 +46,7 @@ services:
       - parameter_redis_data:/data
     networks:
       - parameter
-    command: ["sh", "-c", "rm -f /data/dump.rdb && redis-server --save '' --appendonly no --requirepass $PASSWORD_REDIS"]
+    command: ["sh", "-c", "rm -f /data/dump.rdb && redis-server --save '' --appendonly no"]
     restart: always
 # API --------------------------------------------------------------------------------------------
   parameter-api:
