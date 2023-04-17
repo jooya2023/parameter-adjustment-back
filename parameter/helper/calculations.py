@@ -7,8 +7,8 @@ import numpy as np
 
 import pandas as pd
 
-
 from django.conf import settings
+
 
 # ------ Functions
 
@@ -617,7 +617,8 @@ def read_cons():
     # # time: 290
     # df = pd.read_excel('./Data/Test-Data/consumption_201201.xlsx', sheet_name='cons_300min_bkt13', header=None)
     # # time: 1450
-    df = pd.read_excel(os.path.join(settings.BASE_DIR, 'parameter/helper/CONS.xlsx'), sheet_name='consumption', header=None)
+    df = pd.read_excel(os.path.join(settings.BASE_DIR, 'parameter/helper/CONS.xlsx'), sheet_name='consumption',
+                       header=None)
     # # time: 1450
     # df = pd.read_excel('./Data/Test-Data/consumption_12_23.xlsx', sheet_name='consumption2_12_to_23', header=None)
     # # time: 900
@@ -1259,74 +1260,74 @@ def main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_in
 
 # ___________main___________
 
-if __name__ == '__main__':
-    W_input = [[[] for j in range(3)] for i in range(3)]
-
-    W_input[0][0] = [28.8, 28.0]
-    W_input[0][1] = [28.6, 28.4]
-    W_input[0][2] = [45.6, 25.2]
-
-    W_input[1][0] = [5.32, 2]
-    W_input[1][1] = [5.88, 2]
-    W_input[1][2] = [5.8, 2]
-
-    W_input[2][0] = [5.68]
-    W_input[2][1] = [5.6]
-    W_input[2][2] = [7.68, 2]
-
-    s_floor_input = [[[] for j in range(3)] for i in range(3)]
-    s_floor_input[0][0] = [2, 2]
-    s_floor_input[0][1] = [2, 2]
-    s_floor_input[0][2] = [2, 2]
-
-    s_floor_input[1][0] = [0.2, 0.1]
-    s_floor_input[1][1] = [0.2, 0.1]
-    s_floor_input[1][2] = [0.2, 0.1]
-
-    s_floor_input[2][0] = [0.2]
-    s_floor_input[2][1] = [0.2]
-    s_floor_input[2][2] = [0.2, 0.1]
-
-    storage_input = [[[] for j in range(3)] for i in range(3)]
-    storage_input[0][0] = [60, 60]
-    storage_input[0][1] = [60, 60]
-    storage_input[0][2] = [80, 80]
-
-    storage_input[1][0] = [12, 8]
-    storage_input[1][1] = [12, 8]
-    storage_input[1][2] = [12, 8]
-
-    storage_input[2][0] = [12]
-    storage_input[2][1] = [12]
-    storage_input[2][2] = [12, 6]
-
-    K_input = [3.1, 2.3, 2.4]
-
-    D_R_input = [[8, 7, 9],
-                 [5, 5, 7],
-                 [5, 5, 7]]
-    D_E_input = [[2, 2, 2],
-                 [2, 2, 2],
-                 [2, 2, 2]]
-
-    disables_raw_input = [(10, 9), (4, 12)]
-
-    B_first_11_input = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-
-    charge_instantly_choice_input = False
-
-    CONS_input = read_cons()
-
-    while True:
-        outputs = main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input,
-                             B_first_11_input, disables_raw_input, charge_instantly_choice_input)
+# if __name__ == '__main__':
+#     W_input = [[[] for j in range(3)] for i in range(3)]
+#
+#     W_input[0][0] = [28.8, 28.0]
+#     W_input[0][1] = [28.6, 28.4]
+#     W_input[0][2] = [45.6, 25.2]
+#
+#     W_input[1][0] = [5.32, 2]
+#     W_input[1][1] = [5.88, 2]
+#     W_input[1][2] = [5.8, 2]
+#
+#     W_input[2][0] = [5.68]
+#     W_input[2][1] = [5.6]
+#     W_input[2][2] = [7.68, 2]
+#
+#     s_floor_input = [[[] for j in range(3)] for i in range(3)]
+#     s_floor_input[0][0] = [2, 2]
+#     s_floor_input[0][1] = [2, 2]
+#     s_floor_input[0][2] = [2, 2]
+#
+#     s_floor_input[1][0] = [0.2, 0.1]
+#     s_floor_input[1][1] = [0.2, 0.1]
+#     s_floor_input[1][2] = [0.2, 0.1]
+#
+#     s_floor_input[2][0] = [0.2]
+#     s_floor_input[2][1] = [0.2]
+#     s_floor_input[2][2] = [0.2, 0.1]
+#
+#     storage_input = [[[] for j in range(3)] for i in range(3)]
+#     storage_input[0][0] = [60, 60]
+#     storage_input[0][1] = [60, 60]
+#     storage_input[0][2] = [80, 80]
+#
+#     storage_input[1][0] = [12, 8]
+#     storage_input[1][1] = [12, 8]
+#     storage_input[1][2] = [12, 8]
+#
+#     storage_input[2][0] = [12]
+#     storage_input[2][1] = [12]
+#     storage_input[2][2] = [12, 6]
+#
+#     K_input = [3.1, 2.3, 2.4]
+#
+#     D_R_input = [[8, 7, 9],
+#                  [5, 5, 7],
+#                  [5, 5, 7]]
+#     D_E_input = [[2, 2, 2],
+#                  [2, 2, 2],
+#                  [2, 2, 2]]
+#
+#     disables_raw_input = [(10, 9), (4, 12)]
+#
+#     B_first_11_input = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+#
+#     charge_instantly_choice_input = False
+#
+#     CONS_input = read_cons()
+#
+#     while True:
+#         outputs = main_tread(W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input,
+#                              B_first_11_input, disables_raw_input, charge_instantly_choice_input)

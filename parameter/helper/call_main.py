@@ -92,36 +92,36 @@ W_input[2][1] = [5.6]
 W_input[2][2] = [7.68, 4]
 
 s_floor_input = [[[] for j in range(3)] for i in range(3)]
-s_floor_input[0][0] = [2, 2]
-s_floor_input[0][1] = [2, 2]
-s_floor_input[0][2] = [2, 2]
+s_floor_input[0][0] = [0, 2]
+s_floor_input[0][1] = [0, 2]
+s_floor_input[0][2] = [0, 2]
 
-s_floor_input[1][0] = [0.2, 0.1]
-s_floor_input[1][1] = [0.2, 0.1]
-s_floor_input[1][2] = [0.2, 0.1]
+s_floor_input[1][0] = [0, 0.1]
+s_floor_input[1][1] = [0, 0.1]
+s_floor_input[1][2] = [0, 0.1]
 
-s_floor_input[2][0] = [0.2]
-s_floor_input[2][1] = [0.2]
-s_floor_input[2][2] = [0.2, 0.1]
+s_floor_input[2][0] = [0]
+s_floor_input[2][1] = [0]
+s_floor_input[2][2] = [0, 0.1]
 
 storage_input = [[[] for j in range(3)] for i in range(3)]
 storage_input[0][0] = [60, 60]
-storage_input[0][1] = [60, 60]
-storage_input[0][2] = [80, 80]
+storage_input[0][1] = [12, 60]
+storage_input[0][2] = [12, 80]
 
-storage_input[1][0] = [12, 8]
+storage_input[1][0] = [60, 8]
 storage_input[1][1] = [12, 8]
 storage_input[1][2] = [12, 8]
 
-storage_input[2][0] = [12]
+storage_input[2][0] = [80]
 storage_input[2][1] = [12]
 storage_input[2][2] = [12, 6]
 
 K_input = [3.1, 2.3, 2.4]
 
-D_R_input = [[8, 7, 9],
-             [5, 5, 7],
-             [5, 5, 7]]
+D_R_input = [[8, 5, 5],
+             [7, 5, 5],
+             [9, 7, 7]]
 D_E_input = [[2, 2, 2],
              [2, 2, 2],
              [2, 2, 2]]

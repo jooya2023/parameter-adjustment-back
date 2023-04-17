@@ -360,7 +360,7 @@ class CallMain:
 
             charge_instantly_choice_input = False
             CONS_input = self.cons_input()
-            print(CONS_input)
+
             return W_input, s_floor_input, storage_input, K_input, D_R_input, D_E_input, CONS_input, B_first_11_input, disables_raw_input, charge_instantly_choice_input
         raise exceptions.ValidationError(_("parameter or furnace setting not found."))
 
@@ -688,7 +688,6 @@ class CallMain:
 
     def create_data_opt_shooting_list(self):
         lst = []
-        furnace = FurnaceSetting.objects.filter(is_active=True)[0]
         timezone = datetime.timedelta(hours=3, minutes=30)
         for item_shooting_list in self.opt_shooting_list:
             time = datetime.datetime.now() + datetime.timedelta(minutes=item_shooting_list[0]) + timezone

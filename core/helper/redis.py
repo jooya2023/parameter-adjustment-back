@@ -7,7 +7,6 @@ class Redis(object):
         self.pool_connection = redis.ConnectionPool(
             host=settings.REDIS['default']['HOST'],
             port=settings.REDIS['default']['PORT'],
-            password=settings.REDIS['default']['PASSWORD']
         )
         self.connection = redis.StrictRedis(connection_pool=self.pool_connection)
 
